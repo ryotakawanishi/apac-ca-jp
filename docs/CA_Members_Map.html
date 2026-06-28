@@ -1,0 +1,1822 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CA メンバー 地域別一覧 (177名)</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+:root{--bg:#0b0f19;--panel:#111827;--card:#1a2340;--line:#253352;--accent:#6c8cff;--accent2:#36d399;--danger:#fb7185;--warn:#fbbf24;--text:#e4e8f1;--muted:#64748b;--radius:10px}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter','Hiragino Sans',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+header{background:var(--panel);border-bottom:1px solid var(--line);padding:16px 28px;display:flex;align-items:center;gap:14px;position:sticky;top:0;z-index:100}
+header h1{font-size:16px;font-weight:800;color:#fff}
+header p{font-size:11px;color:var(--muted)}
+.header-right{margin-left:auto;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.search-box{background:#0f172a;border:1px solid var(--line);border-radius:8px;padding:7px 12px;color:var(--text);font-size:12px;outline:none;width:220px}
+.search-box:focus{border-color:var(--accent)}
+.search-box::placeholder{color:#475569}
+.sync-url{background:#0f172a;border:1px solid var(--line);border-radius:8px;padding:7px 12px;color:var(--text);font-size:12px;outline:none;width:260px}
+.sync-url:focus{border-color:var(--accent)}
+.sync-btn{background:#1e293b;border:1px solid var(--line);color:#cbd5e1;border-radius:8px;padding:7px 10px;font-size:11px;font-weight:700;cursor:pointer}
+.sync-btn:hover{background:#273449;color:#fff}
+.sync-status{font-size:11px;color:var(--muted)}
+.sync-status.ok{color:var(--accent2)}
+.sync-status.err{color:var(--danger)}
+.stats{font-size:11px;color:var(--muted)}
+.stats span{color:#fff;font-weight:700}
+.layout{display:flex}
+.sidebar{width:200px;background:var(--panel);border-right:1px solid var(--line);padding:12px 0;flex-shrink:0;position:sticky;top:56px;height:calc(100vh - 56px);overflow-y:auto}
+.sidebar-region{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;padding:10px 14px 4px}
+.sidebar-pref{display:block;font-size:12px;color:#94a3b8;padding:4px 14px;text-decoration:none;border-radius:4px;margin:1px 6px}
+.sidebar-pref:hover{background:#1e293b;color:#fff}
+.sidebar-pref .count{font-size:10px;color:var(--accent);margin-left:4px}
+.sidebar-pref.missing{color:#64748b;opacity:.7}
+.sidebar-pref .count.miss{color:var(--danger)}
+.main{flex:1;padding:24px 28px;overflow:hidden}
+.missing-section{background:linear-gradient(135deg,rgba(248,113,113,.08),rgba(251,191,36,.06));border:1px solid rgba(248,113,113,.25);border-radius:12px;padding:20px;margin-bottom:24px}
+.missing-title{font-size:14px;font-weight:800;color:var(--danger);margin-bottom:12px}
+.missing-grid{display:flex;flex-wrap:wrap;gap:8px}
+.missing-card{background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.25);border-radius:8px;padding:8px 12px;display:flex;flex-direction:column;align-items:center;gap:2px}
+.missing-pref{font-size:13px;font-weight:700;color:#fca5a5}
+.missing-region{font-size:10px;color:var(--muted)}
+.map-section{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:20px;margin-bottom:24px}
+.map-title{font-size:14px;font-weight:800;color:#fff;margin-bottom:10px}
+.map-legend{display:flex;gap:16px;margin-bottom:12px;font-size:11px;color:var(--muted)}
+.leg-item{display:flex;align-items:center;gap:6px}
+.leg-dot{width:14px;height:14px;border-radius:4px}
+.leg-active{background:rgba(108,140,255,.6);border:1px solid rgba(108,140,255,.8)}
+.leg-empty{background:rgba(248,113,113,.4);border:1px solid rgba(248,113,113,.7)}
+.region-section{margin-bottom:36px}
+.region-title{font-size:12px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.08em;margin-bottom:14px;padding-bottom:8px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:8px}
+.region-title .badge{background:#1e293b;color:var(--accent);font-size:10px;padding:2px 8px;border-radius:4px}
+.pref-section{margin-bottom:24px}
+.pref-title{font-size:15px;font-weight:700;color:#fff;margin-bottom:10px;display:flex;align-items:center;gap:8px}
+.pref-title .pref-count{font-size:11px;color:var(--muted);font-weight:400}
+.members-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:10px}
+.member-card{background:var(--card);border-radius:var(--radius);padding:12px 14px;border:1px solid var(--line);transition:border-color .15s}
+.member-card:hover{border-color:var(--accent)}
+.member-card.hidden{display:none}
+.mc-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.mc-date{font-size:10px;color:var(--muted)}
+.badge-1st{font-size:9px;font-weight:700;padding:2px 6px;border-radius:4px;background:rgba(108,140,255,.15);color:#93b4ff;border:1px solid rgba(108,140,255,.3)}
+.badge-2nd{font-size:9px;font-weight:700;padding:2px 6px;border-radius:4px;background:rgba(251,191,36,.15);color:#fbbf24;border:1px solid rgba(251,191,36,.3)}
+.mc-identity{display:flex;align-items:center;gap:10px;margin-bottom:4px}
+.mc-avatar{width:34px;height:34px;border-radius:50%;background:#24324d;border:1px solid #375179;color:#cbd5e1;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0}
+.mc-avatar img{width:100%;height:100%;object-fit:cover}
+.mc-name{font-size:13px;font-weight:700;color:#fff;line-height:1.2}
+.mc-group{font-size:11px;color:var(--muted);margin-bottom:6px}
+.mc-bottom{display:flex;gap:8px}
+.cf-link{font-size:10px;color:var(--accent);text-decoration:none;padding:2px 8px;border:1px solid rgba(108,140,255,.3);border-radius:4px}
+.cf-link:hover{background:rgba(108,140,255,.1)}
+.leaflet-popup-content{font-size:12px;color:#333}
+@media(max-width:768px){.sidebar{display:none}.main{padding:16px}.members-grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<header>
+  <div><h1>🗺️ CA メンバー 地域別一覧</h1><p>Pokémon GO Community Ambassadors Japan</p></div>
+  <div class="header-right">
+    <input class="search-box" type="text" placeholder="名前・グループ・地域で検索..." oninput="filterMembers(this.value)">
+    <input id="caListUrl" class="sync-url" type="text" placeholder="Google Sheet URL (任意)">
+    <button class="sync-btn" onclick="refreshFromSheet()">更新</button>
+    <span id="syncStatus" class="sync-status">未更新</span>
+    <div id="statsLine" class="stats">合計 <span>177</span>名 / カバー <span>39/47</span>都道府県 / 2nd CA <span>32</span>名</div>
+  </div>
+</header>
+<div class="layout">
+  <nav id="sidebar" class="sidebar"><div class="sidebar-region">❄️ 北海道・東北 (19)</div>
+<a class="sidebar-pref" href="#01_北海道">北海道<span class="count">13</span></a>
+<a class="sidebar-pref" href="#02_青森県">青森県<span class="count">1</span></a>
+<a class="sidebar-pref" href="#03_岩手県">岩手県<span class="count">2</span></a>
+<a class="sidebar-pref" href="#04_宮城県">宮城県<span class="count">1</span></a>
+<a class="sidebar-pref" href="#05_秋田県">秋田県<span class="count">1</span></a>
+<a class="sidebar-pref missing" href="#missing">山形県<span class="count miss">0</span></a>
+<a class="sidebar-pref" href="#07_福島県">福島県<span class="count">1</span></a>
+<div class="sidebar-region">🏙️ 関東 (47)</div>
+<a class="sidebar-pref" href="#08_茨城県">茨城県<span class="count">2</span></a>
+<a class="sidebar-pref" href="#09_栃木県">栃木県<span class="count">5</span></a>
+<a class="sidebar-pref" href="#10_群馬県">群馬県<span class="count">3</span></a>
+<a class="sidebar-pref" href="#11_埼玉県">埼玉県<span class="count">6</span></a>
+<a class="sidebar-pref" href="#12_千葉県">千葉県<span class="count">9</span></a>
+<a class="sidebar-pref" href="#13_東京都">東京都<span class="count">14</span></a>
+<a class="sidebar-pref" href="#14_神奈川県">神奈川県<span class="count">8</span></a>
+<div class="sidebar-region">⛰️ 中部 (46)</div>
+<a class="sidebar-pref" href="#15_新潟県">新潟県<span class="count">8</span></a>
+<a class="sidebar-pref missing" href="#missing">富山県<span class="count miss">0</span></a>
+<a class="sidebar-pref missing" href="#missing">石川県<span class="count miss">0</span></a>
+<a class="sidebar-pref" href="#18_福井県">福井県<span class="count">2</span></a>
+<a class="sidebar-pref" href="#19_山梨県">山梨県<span class="count">5</span></a>
+<a class="sidebar-pref" href="#20_長野県">長野県<span class="count">9</span></a>
+<a class="sidebar-pref" href="#21_岐阜県">岐阜県<span class="count">6</span></a>
+<a class="sidebar-pref" href="#22_静岡県">静岡県<span class="count">4</span></a>
+<a class="sidebar-pref" href="#23_愛知県">愛知県<span class="count">12</span></a>
+<div class="sidebar-region">⛩️ 近畿 (31)</div>
+<a class="sidebar-pref" href="#24_三重県">三重県<span class="count">2</span></a>
+<a class="sidebar-pref" href="#25_滋賀県">滋賀県<span class="count">4</span></a>
+<a class="sidebar-pref" href="#26_京都府">京都府<span class="count">6</span></a>
+<a class="sidebar-pref" href="#27_大阪府">大阪府<span class="count">10</span></a>
+<a class="sidebar-pref" href="#28_兵庫県">兵庫県<span class="count">3</span></a>
+<a class="sidebar-pref" href="#29_奈良県">奈良県<span class="count">5</span></a>
+<a class="sidebar-pref" href="#30_和歌山県">和歌山県<span class="count">1</span></a>
+<div class="sidebar-region">🌊 中国・四国 (11)</div>
+<a class="sidebar-pref missing" href="#missing">鳥取県<span class="count miss">0</span></a>
+<a class="sidebar-pref missing" href="#missing">島根県<span class="count miss">0</span></a>
+<a class="sidebar-pref missing" href="#missing">岡山県<span class="count miss">0</span></a>
+<a class="sidebar-pref" href="#34_広島県">広島県<span class="count">2</span></a>
+<a class="sidebar-pref" href="#35_山口県">山口県<span class="count">2</span></a>
+<a class="sidebar-pref" href="#36_徳島県">徳島県<span class="count">5</span></a>
+<a class="sidebar-pref" href="#37_香川県">香川県<span class="count">2</span></a>
+<a class="sidebar-pref missing" href="#missing">愛媛県<span class="count miss">0</span></a>
+<a class="sidebar-pref missing" href="#missing">高知県<span class="count miss">0</span></a>
+<div class="sidebar-region">🌺 九州・沖縄 (23)</div>
+<a class="sidebar-pref" href="#40_福岡県">福岡県<span class="count">6</span></a>
+<a class="sidebar-pref" href="#41_佐賀県">佐賀県<span class="count">2</span></a>
+<a class="sidebar-pref" href="#42_長崎県">長崎県<span class="count">1</span></a>
+<a class="sidebar-pref" href="#43_熊本県">熊本県<span class="count">4</span></a>
+<a class="sidebar-pref" href="#44_大分県">大分県<span class="count">2</span></a>
+<a class="sidebar-pref" href="#45_宮崎県">宮崎県<span class="count">2</span></a>
+<a class="sidebar-pref" href="#46_鹿児島県">鹿児島県<span class="count">3</span></a>
+<a class="sidebar-pref" href="#47_沖縄県">沖縄県<span class="count">3</span></a>
+</nav>
+  <main id="mainContent" class="main"><div class="missing-section" id="missing">
+<div class="missing-title">🚨 CAがまだいない地域 (8県)</div>
+<div class="missing-grid"><div class="missing-card"><span class="missing-pref">山形県</span><span class="missing-region">北海道・東北</span></div><div class="missing-card"><span class="missing-pref">富山県</span><span class="missing-region">中部</span></div><div class="missing-card"><span class="missing-pref">石川県</span><span class="missing-region">中部</span></div><div class="missing-card"><span class="missing-pref">鳥取県</span><span class="missing-region">中国・四国</span></div><div class="missing-card"><span class="missing-pref">島根県</span><span class="missing-region">中国・四国</span></div><div class="missing-card"><span class="missing-pref">岡山県</span><span class="missing-region">中国・四国</span></div><div class="missing-card"><span class="missing-pref">愛媛県</span><span class="missing-region">中国・四国</span></div><div class="missing-card"><span class="missing-pref">高知県</span><span class="missing-region">中国・四国</span></div></div></div>
+<div class="map-section">
+<div class="map-title">🗾 日本地図カバレッジマップ</div>
+<div class="map-legend">
+  <span class="leg-item"><span class="leg-dot leg-active"></span>CAがいる</span>
+  <span class="leg-item"><span class="leg-dot leg-empty"></span>CAがいない</span>
+</div>
+<div id="japanMap" style="width:100%;height:560px;border-radius:10px;overflow:hidden;background:#0a0e17;border:1px solid #253352;"></div>
+</div>
+<div class="region-section"><div class="region-title">❄️ 北海道・東北 <span class="badge">19名</span></div>
+<div class="pref-section" id="01_北海道"><div class="pref-title">北海道 <span class="pref-count">(13名)</span></div>
+<div class="members-grid">
+<div class="member-card" data-search="hases10a pokémon go hokkaido (函館) 北海道">
+  <div class="mc-top"><span class="badge-1st">1st</span><span class="mc-date">5/7/2025</span></div>
+  <div class="mc-name">hases10a</div>
+  <div class="mc-group">🏕️ Pokémon GO Hokkaido (函館)</div>
+  <div class="mc-bottom"><a href="https://campfire.onelink.me/eBr8?af_dp=campfire://&amp;af_force_deeplink=true&amp;deep_link_sub1=cj1jbHVicyZjPTkxMTk2YmI4LWJkOGQtNDE2ZC04ODI4LWY5NTllODBiNmNjZiZpPXRydWU=" target="_blank" class="cf-link">Campfire</a></div>
+</div>
+<div class="member-card" data-search="ellllle3 pokémon go hokkaido (北部道南) 北海道">
+  <div class="mc-top"><span class="badge-1st">1st</span><span class="mc-date">5/7/2025</span></div>
+  <div class="mc-name">ellllle3</div>
+  <div class="mc-group">🏕️ Pokémon GO Hokkaido (北部道南)</div>
+  <div class="mc-bottom"><a href="https://campfire.onelink.me/eBr8?af_dp=campfire://&amp;af_force_deeplink=true&amp;deep_link_sub1=cj1jbHVicyZjPTQ4NTExNzZhLWU1NDMtNGE1My04NWZlLWY1YmYwNjVjMjAzOSZpPXRydWU=" target="_blank" class="cf-link">Campfire</a></div>
+</div>
+<div class="member-card" data-search="kurowayugi pokémon go hokkaido (北部道南) 北海道" style="margin-left:12px;border-left:3px solid #fbbf24;padding-left:10px;">
+  <div class="mc-top"><span class="badge-2nd">2nd</span><span class="mc-date">9/16/2025</span></div>
+  <div class="mc-name">kurowayugi</div>
+  <div class="mc-group">🏕️ Pokémon GO Hokkaido (北部道南)</div>
+  <div class="mc-bottom"><a href="https://campfire.onelink.me/eBr8?af_dp=campfire://&amp;af_force_deeplink=true&amp;deep_link_sub1=cj1jbHVicyZjPTQ4NTExNzZhLWU1NDMtNGE1My04NWZlLWY1YmYwNjVjMjAzOSZpPXRydWU=" target="_blank" class="cf-link">Campfire</a></div>
+</div>
+<div class="member-card" data-search="aquachan1202 pokémon go hokkaido (千歳) 北海道">
+  <div class="mc-top"><span class="badge-1st">1st</span><span class="mc-date">5/7/2025</span></div>
+  <div class="mc-name">aquachan1202</div>
+  <div class="mc-group">🏕️ Pokémon GO Hokkaido (千歳)</div>
+  <div class="mc-bottom"><a href="https://campfire.onelink.me/eBr8?af_dp=campfire://&amp;af_force_deeplink=true&amp;deep_link_sub1=cj1jbHVicyZjPTdkZjZiMWM1LTY0M2QtNDE4Ny1hYjcwLWZkZjJlMjMxMTQ5NCZpPXRydWU=" target="_blank" class="cf-link">Campfire</a></div>
+</div>
+<div class="member-card" data-search="chabo3 pokémon go hokkaido (旭川) 北海道">
+  <div class="mc-top"><span class="badge-1st">1st</span><span class="mc-date">4/9/2024</span></div>
+  <div class="mc-name">chabo3</div>
+  <div class="mc-group">🏕️ Pokémon GO Hokkaido (旭川)</div>
+  <div class="mc-bottom"><a href="https://campfire.onelink.me/eBr8?af_dp=campfire://&amp;af_force_deeplink=true&amp;deep_link_sub1=cj1jbHVicyZjPTkwOWRiZWY2LWJiZmYtNDAwZC04NTQwLTE2ZmZlOGY1ZjE1OSZpPXRydWU=" target="_blank" class="cf-link">Campfire</a></div>
+</div>
+<div class="member-card" data-search="step123813b pokémon go hokkaido (東神楽) 北海道">
+  <div class="mc-top"><span class="badge-1st">1st</span><span class="mc-date">5/15/2025</span></div>
+  <div class="mc-name">step123813B</div>
+  <div class="mc-group">🏕️ Pokémon GO Hokkaido (東神楽)</div>
+  <div class="mc-bottom"><a href="https://campfire.onelink.me/eBr8?af_dp=campfire://&amp;af_force_deeplink=true&amp;deep_link_sub1=cj1jbHVicyZjPTkwOWRiZWY2LWJiZmYtNDAwZC04NTQwLTE2ZmZlOGY1ZjE1OSZpPXRydWU=" target="_blank" class="cf-link">Campfire</a></div>
+</div>
+<div class="member-card" data-search="rmt836166 pokémon go hokkaido (東神楽) 北海道" style="margin-left:12px;border-left:3px solid #fbbf24;padding-left:10px;">
+  <div class="mc-top"><span class="badge-2nd">2nd</span><span class="mc-date">4/13/2026</span></div>
+  <div class="mc-name">rmt836166</div>
+  <div class="mc-group">🏕️ Pokémon GO Hokkaido (東神楽)</div>
+  <div class="mc-bottom"><a href="https://campfire.onelink.me/eBr8?af_dp=campfire://&amp;af_force_deeplink=true&amp;deep_link_sub1=cj1jbHVicyZjPTc0Nzc3MjY3LTBlYWUtNGUzMS1iZWI1LTY1Y2I3YWU2NWIwNyZpPXRydWU=" target="_blank" class="cf-link">Campfire</a></div>
+</div>
+<div class="member-card" data-search="tsurugi19615 pokémon go hokkaido (釧路) 北海道">
+  <div class="mc-top"><span class="badge-1st">1st</span><span class="mc-date">5/7/2025</span></div>
+  <div class="mc-name">tsurugi19615</div>
+  <div class="mc-group">🏕️ Pokémon GO Hokkaido (釧路)</div>
+  <div class="mc-bottom"><a href="https://campfire.onelink.me/eBr8?af_dp=campfire://&amp;af_force_deeplink=true&amp;deep_link_sub1=cj1jbHVicyZjPTcyNmQyMGVkLTc4MWEtNGFhNi1hYTM5LTc4MTliZDAxZGZjMCZpPXRydWU=" target="_blank" class="cf-link">Campfire</a></div>
+</div>
+<div class="member-card" data-search="watari0810 pokémon go monbetsu 北海道">
+  <div class="mc-top"><span class="badge-1st">1st</span><span class="mc-date">9/26/2025</span></div>
+  <div class="mc-name">watari0810</div>
+  <div class="mc-group">🏕️ Pokémon GO Monbetsu</div>
+  <div class="mc-bottom"><a href="https://campfire.onelink.me/eBr8?af_dp=campfire://&amp;af_force_deeplink=true&amp;deep_link_sub1=cj1jbHVicyZjPWY4NjViZWIwLTk4YzktNDExYS04NWM0LTZlMzVmODJhNGFjNSZpPXRydWU=" target="_blank" class="cf-link">Campfire</a></div>
+</div>
+<div class="member-card" data-search="motyon pokémon go mottyo nakashibetsu 北海道">
+  <div class="mc-top"><span class="badge-1st">1st</span><span class="mc-date">5/7/2025</span></div>
+  <div class="mc-name">motyon</div>
+  <div class="mc-group">🏕️ Pokémon GO mottyo Nakashibetsu</div>
+  <div class="mc-bottom"><a href="https://campfire.onelink.me/eBr8?af_dp=campfire://&amp;af_force_deeplink=true&amp;deep_link_sub1=cj1jbHVicyZjPWY5YTk4ZTMwLWJiODQtNGMzMC1iMWZjLTZmMTE2ZWZlNzEyYyZpPXRydWU=" target="_blank" class="cf-link">Campfire</a></div>
+</div>
+<div class="member-card" data-search="hayamongojp pokémon go 旭川 北海道">
+  <div class="mc-top"><span class="badge-1st">1st</span><span class="mc-date">4/9/2024</span></div>
+  <div class="mc-name">HayamonGOjp</div>
+  <div class="mc-group">🏕️ Pokémon GO 旭川</div>
+  <div class="mc-bottom"><a href="https://campfire.onelink.me/eBr8?af_dp=campfire://&amp;af_force_deeplink=true&amp;deep_link_sub1=cj1jbHVicyZjPWZlYWEyN2YyLTBmNTMtNGM3NC1hMGEyLWI5MDU5ODE3NTAxNyZpPXRydWU=" target="_blank" class="cf-link">Campfire</a></div>
+</div>
+<div class="member-card" data-search="gutsthecorgi77 sapporo pokémon go 北海道">
+  <div class="mc-top"><span class="badge-1st">1st</span><span class="mc-date">5/14/2025</span></div>
+  <div class="mc-name">GutsTheCorgi77</div>
+  <div class="mc-group">🏕️ Sapporo Pokémon GO</div>
+  <div class="mc-bottom"><a href="https://campfire.onelink.me/eBr8?af_dp=campfire://&amp;af_force_deeplink=true&amp;deep_link_sub1=cj1jbHVicyZjPTQ4ZmFiYWQ0LWU3NzMtNDlmYi04MGMxLWMxYzk1MjZlY2ZhOSZpPXRydWU=" target="_blank" class="cf-link">Campfire</a></div>
+</div>
+<div class="member-card" data-search="osarachan0520 札幌community 北海道">
+  <div class="mc-top"><span class="badge-1st">1st</span><span class="mc-date">5/14/2025</span></div>
+  <div class="mc-name">osarachan0520</div>
+  <div class="mc-group">🏕️ 札幌COMMUNITY</div>
+  <div class="mc-bottom"><a href="https://campfire.onelink.me/eBr8?af_dp=campfire://&amp;af_force_deeplink=true&amp;deep_link_sub1=cj1jbHVicyZjPWM5OWRkOWQwLTM5YjUtNDg5My04YzJlLTQ1NjAxYTllZDNkZSZpPXRydWU=" target="_blank" class="cf-link">Campfire</a></div>
+</div>
+</div></div>
+<div class="pref-section" id="02_青森県"><div class="pref-title">青森県 <span class="pref-count">(1名)</span></div>
+<div class="members-grid">
+<div class="member-card" data-search="xxyukisoulxx pokémon go aomori misawa hq 青森県">
+  <div class="mc-top"><span class="badge-1st">1st</span><span class="mc-date">12/4/2023</span></div>
+  <div class="mc-name">xxYUKISOULxx</div>
+  <div class="mc-group">🏕️ Pokémon GO AOMORI MISAWA HQ</div>
+  <div class="mc-bottom"><a href="https://campfire.onelink.me/eBr8?af_dp=campfire://&amp;af_force_deeplink=true&amp;deep_link_sub1=cj1jbHVicyZjPWZmM2QwOGVkLWU3MjAtNDVjNS1hOThmLTdkNjM5MDM1YjgzNSZpPXRydWU=" target="_blank" class="cf-link">Campfire</a></div>
+</div>
+</div></div>
+<div class="pref-section" id="03_岩手県"><div class="pref-title">岩手県 <span class="pref-count">(2名)</span></div>
+<div class="members-grid">
+<div class="member-card" data-search="wythdom pokémon go in morioka, iwate 岩手県">
+  <div class="mc-top"><span class="badge-1st">1st</span><span class="mc-date">6/19/2024</span></div>
+  <div class="mc-name">wythdom</div>
+  <div class="mc-group">🏕️ Pokémon GO in Morioka, Iwate</div>
+  <div class="mc-bottom"><a href="https://campfire.onelink.me/eBr8?af_dp=campfire://&amp;af_force_deeplink=true&amp;deep_link_sub1=cj1jbHVicyZjPTliNmI0N2YxLWMwMzQtNDlmZi04NTNkLWVjNjgyNGM1ODQ1MyZpPXRydWU=" target="_blank" class="cf-link">Campfire</a></div>
+</div>
+<div class="member-card" data-search="red5saru ポケモン go in県南 岩手県">
+  <div class="mc-top"><span class="badge-1st">1st</span><span class="mc-date">2026/1/5</span></div>
+  <div class="mc-name">Red5saru</div>
+  <div class="mc-group">🏕️ ポケモン GO in県南</div>
+  <div class="mc-bottom"><a href="https://campfire.onelink.me/eBr8?af_dp=campfire://&amp;af_force_deeplink=true&amp;deep_link_sub1=cj1jbHVicyZjPWJjOTljMmM0LTkyYWMtNDI1OC05M2FjLTYwYzQ1YzA1Yzg1ZiZpPXRydWU=" target="_blank" class="cf-link">Campfire</a></div>
+</div>
+</div></div>
+<div class="pref-section" id="04_宮城県"><div class="pref-title">宮城県 <span class="pref-count">(1名)</span></div>
+<div class="members-grid">
+<div class="member-card" data-search="toyoxx pokémon go community sendai 宮城県">
+  <div class="mc-top"><span class="badge-1st">1st</span><span class="mc-date">4/9/2024</span></div>
+  <div class="mc-name">toyoxx</div>
+  <div class="mc-group">🏕️ Pokémon GO Community Sendai</div>
+  <div class="mc-bottom"><a href="https://campfire.onelink.me/eBr8?af_dp=campfire://&amp;af_force_deeplink=true&amp;deep_link_sub1=cj1jbHVicyZjPTA3M2Y2OTFhLTM1ZDktNGQyNi1iMzRlLTYwOTI5YzRmZTU3ZiZpPXRydWU=" target="_blank" class="cf-link">Campfire</a></div>
+</div>
+</div></div>
+<div class="pref-section" id="05_秋田県"><div class="pref-title">秋田県 <span class="pref-count">(1名)</span></div>
+<div class="members-grid">
+<div class="member-card" data-search="null8terotero ポケモン go 横手(ミートアップ作成用) 秋田県">
+  <div class="mc-top"><span class="badge-1st">1st</span><span class="mc-date">5/15/2025</span></div>
+  <div class="mc-name">Null8terotero</div>
+  <div class="mc-group">🏕️ ポケモン GO 横手(ミートアップ作成用)</div>
+  <div class="mc-bottom"><a href="https://campfire.onelink.me/eBr8?af_dp=campfire://&amp;af_force_deeplink=true&amp;deep_link_sub1=cj1jbHVicyZjPWYzMTA2MzgyLWNiYzgtNGYxZC1hODVlLWU5MjdkNzNhMDljYSZpPXRydWU=" target="_blank" class="cf-link">Campfire</a></div>
+</div>
+</div></div>
+<div class="pref-section" id="07_福島県"><div class="pref-title">福島県 <span class="pref-count">(1名)</span></div>
+<div class="members-grid">
+<div class="member-card" data-search="nishikitenor ポケモン goコミュニティ 福島支部 福島県">
+  <div class="mc-top"><span class="badge-1st">1st</span><span class="mc-date">5/20/2025</span></div>
+  <div class="mc-name">NishikiTenor</div>
+  <div class="mc-group">🏕️ ポケモン GOコミュニティ 福島支部</div>
+  <div class="mc-bottom"><a href="https://campfire.onelink.me/eBr8?af_dp=campfire://&amp;af_force_deeplink=true&amp;deep_link_sub1=cj1jbHVicyZjPTdiMGNhMGJiLWVjM2EtNGM0OS1iNTY2LTI4NDYwYjE4ZDI1ZiZpPXRydWU=" target="_blank" class="cf-link">Campfire</a></div>
+</div>
+</div></div>
+</div>
+<div class="region-section"><div class="region-title">🏙️ 関東 <span class="badge">47名</span></div>
+<div class="pref-section" id="08_茨城県"><div class="pref-title">茨城県 <span class="pref-count">(2名)</span></div>
+<div class="members-grid">
+<div class="member-card" data-search="nanabopipi0825 pokémon go koga 茨城県">
+  <div class="mc-top"><span class="badge-1st">1st</span><span class="mc-date">5/7/2025</span></div>
+  <div class="mc-name">nanabopipi0825</div>
+  <div class="mc-group">🏕️ Pokémon GO KOGA</div>
+  <div class="mc-bottom"><a href="https://campfire.onelink.me/eBr8?af_dp=campfire://&amp;af_force_deeplink=true&amp;deep_link_sub1=cj1jbHVicyZjPWRhODI5MTczLWU4NzUtNDUwMy04ODI3LTJkMGM3ODQwNDNiZiZpPXRydWU=" target="_blank" class="cf-link">Campfire</a></div>
+</div>
+<div class="member-card" data-search="hatohasewo シャリン夢現 茨城県">
+  <div class="mc-top"><span class="badge-1st">1st</span><span class="mc-date">2026/1/19</span></div>
+  <div class="mc-name">hatohasewo</div>
+  <div class="mc-group">🏕️ シャリン夢現</div>
+  <div class="mc-bottom"><a href="https://campfire.onelink.me/eBr8?af_dp=campfire://&amp;af_force_deeplink=true&amp;deep_link_sub1=cj1jbHVicyZjPWEwOGFjYmNiLWJhZGYtNDRjOC1hY2E0LWMxNmQ2MTM0Y2ZhZSZpPXRydWU=" target="_blank" class="cf-link">Campfire</a></div>
+</div>
+</div></div>
+<div class="pref-section" id="09_栃木県"><div class="pref-title">栃木県 <span class="pref-count">(5名)</span></div>
+<div class="members-grid">
+<div class="member-card" data-search="kamekame1027 【新】足利周辺でgo 栃木県">
+  <div class="mc-top"><span class="badge-1st">1st</span><span class="mc-date">9/16/2025</span></div>
+  <div class="mc-name">kamekame1027</div>
+  <div class="mc-group">🏕️ 【新】足利周辺でGO</div>
+  <div class="mc-bottom"><a href="https://campfire.onelink.me/eBr8?af_dp=campfire://&amp;af_force_deeplink=true&amp;deep_link_sub1=cj1jbHVicyZjPTRiNzk0OThhLWE3ZTgtNGFiZC05OGViLTFiNTc5ZGJlYmRkNSZpPXRydWU=" target="_blank" class="cf-link">Campfire</a></div>
+</div>
+<div class="member-card" data-search="05kouichi23 【新】足利周辺でgo 栃木県" style="margin-left:12px;border-left:3px solid #fbbf24;padding-left:10px;">
+  <div class="mc-top"><span class="badge-2nd">2nd</span><span class="mc-date">12/2/2025</span></div>
+  <div class="mc-name">05kouichi23</div>
+  <div class="mc-group">🏕️ 【新】足利周辺でGO</div>
+  <div class="mc-bottom"><a href="https://campfire.onelink.me/eBr8?af_dp=campfire://&amp;af_force_deeplink=true&amp;deep_link_sub1=cj1jbHVicyZjPTRiNzk0OThhLWE3ZTgtNGFiZC05OGViLTFiNTc5ZGJlYmRkNSZpPXRydWU=" target="_blank" class="cf-link">Campfire</a></div>
+</div>
+<div class="member-card" data-search="w4ag ポケモン go 足利 ~ゆるふわ~ 栃木県">
+  <div class="mc-top"><span class="badge-1st">1st</span><span class="mc-date">9/26/2025</span></div>
+  <div class="mc-name">W4AG</div>
+  <div class="mc-group">🏕️ ポケモン GO 足利 ~ゆるふわ~</div>
+  <div class="mc-bottom"><a href="https://campfire.onelink.me/eBr8?af_dp=campfire://&amp;af_force_deeplink=true&amp;deep_link_sub1=cj1jbHVicyZjPTc4ZTRlNmQ0LWQxYTQtNGI1NC05ZmUxLWMwZmU5MTRlNjdkYyZpPXRydWU=" target="_blank" class="cf-link">Campfire</a></div>
+</div>
+<div class="member-card" data-search="uruseipeople 宇都宮ライト団 栃木県">
+  <div class="mc-top"><span class="badge-1st">1st</span><span class="mc-date">5/10/2024</span></div>
+  <div class="mc-name">uruseipeople</div>
+  <div class="mc-group">🏕️ 宇都宮ライト団</div>
+  <div class="mc-bottom"><a href="https://campfire.onelink.me/eBr8?af_dp=campfire://&amp;af_force_deeplink=true&amp;deep_link_sub1=cj1jbHVicyZjPWY1ZjVjZDJjLWI0NGQtNDAwZS1iN2M0LWU3YzFiNTU0N2ZiZSZpPXRydWU=" target="_blank" class="cf-link">Campfire</a></div>
+</div>
+<div class="member-card" data-search="jyon12345 宇都宮ライト団 栃木県" style="margin-left:12px;border-left:3px solid #fbbf24;padding-left:10px;">
+  <div class="mc-top"><span class="badge-2nd">2nd</span><span class="mc-date">5/15/2025</span></div>
+  <div class="mc-name">jyon12345</div>
+  <div class="mc-group">🏕️ 宇都宮ライト団</div>
+  <div class="mc-bottom"><a href="https://campfire.onelink.me/eBr8?af_dp=campfire://&amp;af_force_deeplink=true&amp;deep_link_sub1=cj1jbHVicyZjPWY1ZjVjZDJjLWI0NGQtNDAwZS1iN2M0LWU3YzFiNTU0N2ZiZSZpPXRydWU=" target="_blank" class="cf-link">Campfire</a></div>
+</div>
+</div></div>
+<div class="pref-section" id="10_群馬県"><div class="pref-title">群馬県 <span class="pref-count">(3名)</span></div>
+<div class="members-grid">
+<div class="member-card" data-search="inochan01 shiny pokémon getだぜ 群馬県">
+  <div class="mc-top"><span class="badge-1st">1st</span><span class="mc-date">5/15/2025</span></div>
+  <div class="mc-name">inochan01</div>
+  <div class="mc-group">🏕️ Shiny Pokémon Getだぜ</div>
+  <div class="mc-bottom"><a href="https://campfire.onelink.me/eBr8?af_dp=campfire://&amp;af_force_deeplink=true&amp;deep_link_sub1=cj1jbHVicyZjPTk4YzNlNzVmLWQzODgtNGRjZS1hYTQ0LTg2YmJmZWEzNGU5MSZpPXRydWU=" target="_blank" class="cf-link">Campfire</a></div>
+</div>
+<div class="member-card" data-search="yuu410177861 ポケモン go 大泉町 群馬県">
+  <div class="mc-top"><span class="badge-1st">1st</span><span class="mc-date">6/5/2026</span></div>
+  <div class="mc-name">Yuu410177861</div>
+  <div class="mc-group">🏕️ ポケモン GO 大泉町</div>
+  <div class="mc-bottom"><a href="https://campfire-rel-admin.eng.nianticlabs.com/clubs?clubId=89454b48-1c2a-499b-9e15-3a62c21688f4" target="_blank" class="cf-link">Campfire</a></div>
+</div>
+<div class="member-card" data-search="ruskman63cross ヤドぺんクラブ群馬版 群馬県">
+  <div class="mc-top"><span class="badge-1st">1st</span><span class="mc-date">6/19/2024</span></div>
+  <div class="mc-name">Ruskman63cross</div>
+  <div class="mc-group">🏕️ ヤドぺんクラブ群馬版</div>
+  <div class="mc-bottom"><a href="https://campfire.onelink.me/eBr8?af_dp=campfire://&amp;af_force_deeplink=true&amp;deep_link_sub1=cj1jbHVicyZjPWE4NTdiNTc2LWU5MDItNDQwYS1iMzMxLWI4YjQ0ZWZiNTcxOSZpPXRydWU=" target="_blank" class="cf-link">Campfire</a></div>
+</div>
+</div></div>
+<div class="pref-section" id="11_埼玉県"><div class="pref-title">埼玉県 <span class="pref-count">(6名)</span></div>
+<div class="members-grid">
+<div class="member-card" data-search="0touring pokémon go 埼玉県 埼玉県">
+  <div class="mc-top"><span class="badge-1st">1st</span><span class="mc-date">11/10/2025</span></div>
+  <div class="mc-name">0touring</div>
+  <div class="mc-group">🏕️ Pokémon GO 埼玉県</div>
+  <div class="mc-bottom"><a href="https://campfire.onelink.me/eBr8?af_dp=campfire://&amp;af_force_deeplink=true&amp;deep_link_sub1=cj1jbHVicyZjPTM1YzkxMTFkLWI1ZjktNGYyYS1iMDYwLWE0YjhiNzQ5NjllZSZpPXRydWU=" target="_blank" class="cf-link">Campfire</a></div>
+</div>
+<div class="member-card" data-search="asukagawa1121 team彩西〜pokémon go〜 埼玉県">
+  <div class="mc-top"><span class="badge-1st">1st</span><span class="mc-date">5/7/2025</span></div>
+  <div class="mc-name">asukagawa1121</div>
+  <div class="mc-group">🏕️ TEAM彩西〜Pokémon GO〜</div>
+  <div class="mc-bottom"><a href="https://campfire.onelink.me/eBr8?af_dp=campfire://&amp;af_force_deeplink=true&amp;deep_link_sub1=cj1jbHVicyZjPTA5NzJhYjRhLTkxYzItNDMzMC05ZTNhLTFhYjkyZWFkM2IzZiZpPXRydWU=" target="_blank" class="cf-link">Campfire</a></div>
+</div>
+<div class="member-card" data-search="junp0k0 ポケモン go 嵐山町 埼玉県">
+  <div class="mc-top"><span class="badge-1st">1st</span><span class="mc-date">5/15/2025</span></div>
+  <div class="mc-name">JUNP0K0</div>
+  <div class="mc-group">🏕️ ポケモン GO 嵐山町</div>
+  <div class="mc-bottom"><a href="https://campfire.onelink.me/eBr8?af_dp=campfire://&amp;af_force_deeplink=true&amp;deep_link_sub1=cj1jbHVicyZjPWY1ZWRjNWVmLTM5MGQtNGFhOC04ZmUzLWQyY2FhZmNhNjljZiZpPXRydWU=" target="_blank" class="cf-link">Campfire</a></div>
+</div>
+<div class="member-card" data-search="doragon205 ポケモン go深谷城址 埼玉県">
+  <div class="mc-top"><span class="badge-1st">1st</span><span class="mc-date">3/17/2026</span></div>
+  <div class="mc-name">doragon205</div>
+  <div class="mc-group">🏕️ ポケモン GO深谷城址</div>
+  <div class="mc-bottom"><a href="https://campfire.onelink.me/eBr8?af_dp=campfire://&amp;af_force_deeplink=true&amp;deep_link_sub1=cj1jbHVicyZjPWZmMTg4Y2ZmLWFhYTktNGM4My1hZmVmLWQ1MmI0OGFkZDZmZSZpPXRydWU=" target="_blank" class="cf-link">Campfire</a></div>
+</div>
+<div class="member-card" data-search="irodoricafe 久喜シティ pokémon go tc 埼玉県">
+  <div class="mc-top"><span class="badge-1st">1st</span><span class="mc-date">12/4/2023</span></div>
+  <div class="mc-name">Irodoricafe</div>
+  <div class="mc-group">🏕️ 久喜シティ Pokémon GO TC</div>
+  <div class="mc-bottom"><a href="https://campfire.onelink.me/eBr8?af_dp=campfire://&amp;af_force_deeplink=true&amp;deep_link_sub1=cj1jbHVicyZjPTZhMzUzNGNlLTdlOWQtNGUzMi05NjNmLTU3YzU4MGMyMTI0YiZpPXRydWU=" target="_blank" class="cf-link">Campfire</a></div>
+</div>
+<div class="member-card" data-search="yamasanc 東松山ポケモン go 埼玉県">
+  <div class="mc-top"><span class="badge-1st">1st</span><span class="mc-date">5/20/2025</span></div>
+  <div class="mc-name">yamasanc</div>
+  <div class="mc-group">🏕️ 東松山ポケモン GO</div>
+  <div class="mc-bottom"><a href="https://campfire.onelink.me/eBr8?af_dp=campfire://&amp;af_force_deeplink=true&amp;deep_link_sub1=cj1jbHVicyZjPTE4ODY5YWZlLTJhNzMtNDU2ZC04OGZiLTU2ZDkzOTUwNDY4ZiZpPXRydWU=" target="_blank" class="cf-link">Campfire</a></div>
+</div>
+</div></div>
+<div class="pref-section" id="12_千葉県"><div class="pref-title">千葉県 <span class="pref-count">(9名)</span></div>
+<div class="members-grid">
+<div class="member-card" data-search="abipoon pokémon go chiba 千葉県">
+  <div class="mc-top"><span class="badge-1st">1st</span><span class="mc-date">6/19/2024</span></div>
+  <div class="mc-name">abipoon</div>
+  <div class="mc-group">🏕️ Pokémon GO CHIBA</div>
+  <div class="mc-bottom"><a href="https://campfire.onelink.me/eBr8?af_dp=campfire://&amp;af_force_deeplink=true&amp;deep_link_sub1=cj1jbHVicyZjPTA0NjRlZGVkLWZmMWEtNGJjYi1hMTM3LTU4MWU3ZGY0OWIxZCZpPXRydWU=" target="_blank" class="cf-link">Campfire</a></div>
+</div>
+<div class="member-card" data-search="0pandamyhero0 pokémon go chiba 千葉県" style="margin-left:12px;border-left:3px solid #fbbf24;padding-left:10px;">
+  <div class="mc-top"><span class="badge-2nd">2nd</span><span class="mc-date">6/5/2026</span></div>
+  <div class="mc-name">0pandamyhero0</div>
+  <div class="mc-group">🏕️ Pokémon GO CHIBA</div>
+  <div class="mc-bottom"><a href="https://campfire-rel-admin.eng.nianticlabs.com/clubs?clubId=0464eded-ff1a-4bcb-a137-581e7df49b1d" target="_blank" class="cf-link">Campfire</a></div>
+</div>
+<div class="member-card" data-search="37kazugogo77 pokémon go narita 千葉県">
+  <div class="mc-top"><span class="badge-1st">1st</span><span class="mc-date">5/15/2025</span></div>
+  <div class="mc-name">37kazugogo77</div>
+  <div class="mc-group">🏕️ Pokémon GO Narita</div>
+  <div class="mc-bottom"><a href="https://campfire.onelink.me/eBr8?af_dp=campfire://&amp;af_force_deeplink=true&amp;deep_link_sub1=cj1jbHVicyZjPTM5ZjBlZWQ1LTZmODYtNGQwOC1hMzc4LWQzZjA2YWIxYmE5MCZpPXRydWU=" target="_blank" class="cf-link">Campfire</a></div>
+</div>
+<div class="member-card" data-search="killerqueen828 pokémon go narita 千葉県" style="margin-left:12px;border-left:3px solid #fbbf24;padding-left:10px;">
+  <div class="mc-top"><span class="badge-2nd">2nd</span><span class="mc-date">2026/2/2</span></div>
+  <div class="mc-name">KillerQueen828</div>
+  <div class="mc-group">🏕️ Pokémon GO Narita</div>
+  <div class="mc-bottom"><a href="https://campfire.onelink.me/eBr8?af_dp=campfire://&amp;af_force_deeplink=true&amp;deep_link_sub1=cj1jbHVicyZjPTM5ZjBlZWQ1LTZmODYtNGQwOC1hMzc4LWQzZjA2YWIxYmE5MCZpPXRydWU=" target="_blank" class="cf-link">Campfire</a></div>
+</div>
+<div class="member-card" data-search="falkor244 pokémon go ユーカリが丘 千葉県">
+  <div class="mc-top"><span class="badge-1st">1st</span><span class="mc-date">9/16/2025</span></div>
+  <div class="mc-name">Falkor244</div>
+  <div class="mc-group">🏕️ Pokémon GO ユーカリが丘</div>
+  <div class="mc-bottom"><a href="https://campfire.onelink.me/eBr8?af_dp=campfire://&amp;af_force_deeplink=true&amp;deep_link_sub1=cj1jbHVicyZjPWExODQ5N2FiLTE3MDMtNDkwYy1iNjQ3LTYxNjE0OGY4MGZjMyZpPXRydWU=" target="_blank" class="cf-link">Campfire</a></div>
+</div>
+<div class="member-card" data-search="1sky6787 pokémon go 千葉支部 chiba 千葉県">
+  <div class="mc-top"><span class="badge-1st">1st</span><span class="mc-date">5/15/2025</span></div>
+  <div class="mc-name">1SKY6787</div>
+  <div class="mc-group">🏕️ Pokémon GO 千葉支部 CHIBA</div>
+  <div class="mc-bottom"><a href="https://campfire.onelink.me/eBr8?af_dp=campfire://&amp;af_force_deeplink=true&amp;deep_link_sub1=cj1jbHVicyZjPTUzYWJjMzUzLTQyODctNDZmMi1hMzRlLTI4M2EzZDNkZTc1ZCZpPXRydWU=" target="_blank" class="cf-link">Campfire</a></div>
+</div>
+<div class="member-card" data-search="blinkjp pokémon go 袋公園（旭） 千葉県">
+  <div class="mc-top"><span class="badge-1st">1st</span><span class="mc-date">2/9/2024</span></div>
+  <div class="mc-name">blinkjp</div>
+  <div class="mc-group">🏕️ Pokémon GO 袋公園（旭）</div>
+  <div class="mc-bottom"><a href="https://campfire.onelink.me/eBr8?af_dp=campfire://&amp;af_force_deeplink=true&amp;deep_link_sub1=cj1jbHVicyZjPTIxZWJjZWFjLTA3OTYtNDc1Yy05MDU2LWNiYTAwNjkyMjc3OSZpPXRydWU=" target="_blank" class="cf-link">Campfire</a></div>
+</div>
+<div class="member-card" data-search="goma7866 ポケモン go urayasu 千葉県">
+  <div class="mc-top"><span class="badge-1st">1st</span><span class="mc-date">5/10/2024</span></div>
+  <div class="mc-name">GOMA7866</div>
+  <div class="mc-group">🏕️ ポケモン GO URAYASU</div>
+  <div class="mc-bottom"><a href="https://campfire.onelink.me/eBr8?af_dp=campfire://&amp;af_force_deeplink=true&amp;deep_link_sub1=cj1jbHVicyZjPWZjOWYyYTBiLWMwOWUtNDQ0NC1hZDJjLWFhNDE0NDkzYThkOCZpPXRydWU=" target="_blank" class="cf-link">Campfire</a></div>
+</div>
+<div class="member-card" data-search="suzukipm 柏らへん 千葉県">
+  <div class="mc-top"><span class="badge-1st">1st</span><span class="mc-date">5/7/2025</span></div>
+  <div class="mc-name">SuzukiPM</div>
+  <div class="mc-group">🏕️ 柏らへん</div>
+  <div class="mc-bottom"><a href="https://campfire.onelink.me/eBr8?af_dp=campfire://&amp;af_force_deeplink=true&amp;deep_link_sub1=cj1jbHVicyZjPTE0ZjE1MzUyLTM3MDAtNDkyMS1hNTQ3LThjYzc5YTI1OGJmNyZpPXRydWU=" target="_blank" class="cf-link">Campfire</a></div>
+</div>
+</div></div>
+<div class="pref-section" id="13_東京都"><div class="pref-title">東京都 <span class="pref-count">(14名)</span></div>
+<div class="members-grid">
+<div class="member-card" data-search="miroking2016 cara shinjuku（ポケモン goから新宿） 東京都">
+  <div class="mc-top"><span class="badge-1st">1st</span><span class="mc-date">5/10/2024</span></div>
+  <div class="mc-name">miroking2016</div>
+  <div class="mc-group">🏕️ Cara Shinjuku（ポケモン GOから新宿）</div>
+  <div class="mc-bottom"><a href="https://campfire.onelink.me/eBr8?af_dp=campfire://&amp;af_force_deeplink=true&amp;deep_link_sub1=cj1jbHVicyZjPWEwNzRlNTllLTE1YzctNGM1My1iOTg1LTRkMDdkNjQ2ODgxYSZpPXRydWU=" target="_blank" class="cf-link">Campfire</a></div>
+</div>
+<div class="member-card" data-search="kakerun1221 pokémon go club tokyo 東京都">
+  <div class="mc-top"><span class="badge-1st">1st</span><span class="mc-date">9/15/2023</span></div>
+  <div class="mc-name">kakerun1221</div>
+  <div class="mc-group">🏕️ Pokémon GO Club Tokyo</div>
+  <div class="mc-bottom"><a href="https://campfire.onelink.me/eBr8?af_dp=campfire://&amp;af_force_deeplink=true&amp;deep_link_sub1=cj1jbHVicyZjPWQ5YTU3YTJhLTk4ZTctNGM5Ny04NDU4LTIxYTg5NTRlNDgxMiZpPXRydWU=" target="_blank" class="cf-link">Campfire</a></div>
+</div>
+<div class="member-card" data-search="furugogo pokémon go club tokyo 東京都" style="margin-left:12px;border-left:3px solid #fbbf24;padding-left:10px;">
+  <div class="mc-top"><span class="badge-2nd">2nd</span><span class="mc-date">7/22/2025</span></div>
+  <div class="mc-name">furugogo</div>
+  <div class="mc-group">🏕️ Pokémon GO Club Tokyo</div>
+  <div class="mc-bottom"><a href="https://campfire.onelink.me/eBr8?af_dp=campfire://&amp;af_force_deeplink=true&amp;deep_link_sub1=cj1jbHVicyZjPWQ5YTU3YTJhLTk4ZTctNGM5Ny04NDU4LTIxYTg5NTRlNDgxMiZpPXRydWU=" target="_blank" class="cf-link">Campfire</a></div>
+</div>
+<div class="member-card" data-search="yukimanorange pokémon go friends tokyo がちもんくらぶ 東京都">
+  <div class="mc-top"><span class="badge-1st">1st</span><span class="mc-date">5/10/2024</span></div>
+  <div class="mc-name">YukiManOrange</div>
+  <div class="mc-group">🏕️ Pokémon GO Friends Tokyo がちもんくらぶ</div>
+  <div class="mc-bottom"><a href="https://campfire.onelink.me/eBr8?af_dp=campfire://&amp;af_force_deeplink=true&amp;deep_link_sub1=cj1jbHVicyZjPWUxMDk3MzAyLTllMjQtNGEzMy1hOGI0LTEwODIwZTRmMjE5MCZpPXRydWU=" target="_blank" class="cf-link">Campfire</a></div>
+</div>
+<div class="member-card" data-search="takezotokyojp pokémon go friends tokyo がちもんくらぶ 東京都" style="margin-left:12px;border-left:3px solid #fbbf24;padding-left:10px;">
+  <div class="mc-top"><span class="badge-2nd">2nd</span><span class="mc-date">10/7/2025</span></div>
+  <div class="mc-name">TakezoTokyoJp</div>
+  <div class="mc-group">🏕️ Pokémon GO Friends Tokyo がちもんくらぶ</div>
+  <div class="mc-bottom"><a href="https://campfire.onelink.me/eBr8?af_dp=campfire://&amp;af_force_deeplink=true&amp;deep_link_sub1=cj1jbHVicyZjPWUxMDk3MzAyLTllMjQtNGEzMy1hOGI0LTEwODIwZTRmMjE5MCZpPXRydWU=" target="_blank" class="cf-link">Campfire</a></div>
+</div>
+<div class="member-card" data-search="kamikoppujp pokémon go jpn 東京都">
+  <div class="mc-top"><span class="badge-1st">1st</span><span class="mc-date">3/1/2024</span></div>
+  <div class="mc-name">kamikoppuJP</div>
+  <div class="mc-group">🏕️ Pokémon GO JPN</div>
+  <div class="mc-bottom"><a href="https://campfire.onelink.me/eBr8?af_dp=campfire://&amp;af_force_deeplink=true&amp;deep_link_sub1=cj1jbHVicyZjPTIxMjE4ZmRkLTcxNmEtNGNkOS04NjNjLTMzYjgyNWE3OTViZCZpPXRydWU=" target="_blank" class="cf-link">Campfire</a></div>
+</div>
+<div class="member-card" data-search="clubwelovecrab ひばりでキョダイマックス 東京都">
+  <div class="mc-top"><span class="badge-1st">1st</span><span class="mc-date">2025/12/22</span></div>
+  <div class="mc-name">clubwelovecrab</div>
+  <div class="mc-group">🏕️ ひばりでキョダイマックス</div>
+  <div class="mc-bottom"><a href="https://campfire.onelink.me/eBr8?af_dp=campfire://&amp;af_force_deeplink=true&amp;deep_link_sub1=cj1jbHVicyZjPTEwNmVmMGE5LTdhMTItNDc2Yi04MzhmLWE2ZmU0ZTAzYTk0OSZpPXRydWU=" target="_blank" class="cf-link">Campfire</a></div>
+</div>
+<div class="member-card" data-search="sukekkey ポケモン go メガ遊楽船 東京都">
+  <div class="mc-top"><span class="badge-1st">1st</span><span class="mc-date">2/26/2024</span></div>
+  <div class="mc-name">Sukekkey</div>
+  <div class="mc-group">🏕️ ポケモン GO メガ遊楽船</div>
+  <div class="mc-bottom"><a href="https://campfire.onelink.me/eBr8?af_dp=campfire://&amp;af_force_deeplink=true&amp;deep_link_sub1=cj1jbHVicyZjPTA3MGQ1NTk1LTRiM2QtNGRjNC1hODcyLTM0MzA0OTM2NWZkZCZpPXRydWU=" target="_blank" class="cf-link">Campfire</a></div>
+</div>
+<div class="member-card" data-search="signa0497 ポケモン go メガ遊楽船 東京都" style="margin-left:12px;border-left:3px solid #fbbf24;padding-left:10px;">
+  <div class="mc-top"><span class="badge-2nd">2nd</span><span class="mc-date">8/12/2025</span></div>
+  <div class="mc-name">signa0497</div>
+  <div class="mc-group">🏕️ ポケモン GO メガ遊楽船</div>
+  <div class="mc-bottom"><a href="https://campfire.onelink.me/eBr8?af_dp=campfire://&amp;af_force_deeplink=true&amp;deep_link_sub1=cj1jbHVicyZjPTA3MGQ1NTk1LTRiM2QtNGRjNC1hODcyLTM0MzA0OTM2NWZkZCZpPXRydWU=" target="_blank" class="cf-link">Campfire</a></div>
+</div>
+<div class="member-card" data-search="housesteps ポケモン go 品川区 東京都">
+  <div class="mc-top"><span class="badge-1st">1st</span><span class="mc-date">5/24/2024</span></div>
+  <div class="mc-name">HouseSteps</div>
+  <div class="mc-group">🏕️ ポケモン GO 品川区</div>
+  <div class="mc-bottom"><a href="https://campfire.onelink.me/eBr8?af_dp=campfire://&amp;af_force_deeplink=true&amp;deep_link_sub1=cj1jbHVicyZjPTZhN2JlNGNjLTRiOGItNGVmMS1iMmZlLWFlMjQ2MTMzYzg4MSZpPXRydWU=" target="_blank" class="cf-link">Campfire</a></div>
+</div>
+<div class="member-card" data-search="hirorihime 愛と平和のnerimaランドへようこそ(*´ー｀*)♡♡ 東京都">
+  <div class="mc-top"><span class="badge-1st">1st</span><span class="mc-date">5/20/2025</span></div>
+  <div class="mc-name">HIRORIHIME</div>
+  <div class="mc-group">🏕️ 愛と平和のNerimaランドへようこそ(*´ー｀*)♡♡</div>
+  <div class="mc-bottom"><a href="https://campfire.onelink.me/eBr8?af_dp=campfire://&amp;af_force_deeplink=true&amp;deep_link_sub1=cj1jbHVicyZjPTBiN2VmN2ZjLWE1YmUtNDMwOC05Y2UwLWFiOTQzYjA4NDRhMyZpPXRydWU=" target="_blank" class="cf-link">Campfire</a></div>
+</div>
+<div class="member-card" data-search="bliareos 早稲田の会 東京都">
+  <div class="mc-top"><span class="badge-1st">1st</span><span class="mc-date">4/9/2024</span></div>
+  <div class="mc-name">BLIAREOS</div>
+  <div class="mc-group">🏕️ 早稲田の会</div>
+  <div class="mc-bottom"><a href="https://campfire.onelink.me/eBr8?af_dp=campfire://&amp;af_force_deeplink=true&amp;deep_link_sub1=cj1jbHVicyZjPWYwYWQyYWFiLTk4MzUtNDhlZC1iYTZjLWMwNmU3Mzk5MzdmNCZpPXRydWU=" target="_blank" class="cf-link">Campfire</a></div>
+</div>
+<div class="member-card" data-search="00kanonpapa39 楽しくポケモン go 砂町 東京都">
+  <div class="mc-top"><span class="badge-1st">1st</span><span class="mc-date">5/15/2025</span></div>
+  <div class="mc-name">00Kanonpapa39</div>
+  <div class="mc-group">🏕️ 楽しくポケモン GO 砂町</div>
+  <div class="mc-bottom"><a href="https://campfire.onelink.me/eBr8?af_dp=campfire://&amp;af_force_deeplink=true&amp;deep_link_sub1=cj1jbHVicyZjPWI1NTU1YmY3LWY1YTgtNGU4OC04NThkLTYwOTkyNDZmNGMyYiZpPXRydWU=" target="_blank" class="cf-link">Campfire</a></div>
+</div>
+<div class="member-card" data-search="konsento1911 滝野川ブルーウィングス 東京都">
+  <div class="mc-top"><span class="badge-1st">1st</span><span class="mc-date">6/16/2025</span></div>
+  <div class="mc-name">konsento1911</div>
+  <div class="mc-group">🏕️ 滝野川ブルーウィングス</div>
+  <div class="mc-bottom"><a href="https://campfire.onelink.me/eBr8?af_dp=campfire://&amp;af_force_deeplink=true&amp;deep_link_sub1=cj1jbHVicyZjPTg1YjljYmZiLTQwMDEtNGFiOC1iNGRiLTFlYWMxMjcyMTAxZCZpPXRydWU=" target="_blank" class="cf-link">Campfire</a></div>
+</div>
+</div></div>
+<div class="pref-section" id="14_神奈川県"><div class="pref-title">神奈川県 <span class="pref-count">(8名)</span></div>
+<div class="members-grid">
+<div class="member-card" data-search="qqkenkenqq gosnapshot カントーgroup 神奈川県">
+  <div class="mc-top"><span class="badge-1st">1st</span><span class="mc-date">5/10/2024</span></div>
+  <div class="mc-name">QQkenkenQQ</div>
+  <div class="mc-group">🏕️ GOsnapshot カントーgroup</div>
+  <div class="mc-bottom"><a href="https://campfire.onelink.me/eBr8?af_dp=campfire://&amp;af_force_deeplink=true&amp;deep_link_sub1=cj1jbHVicyZjPTRhNWE0MTI1LTU2YzctNGEzNi04NWU4LWY4MmMxNGJlZmEzMyZpPXRydWU=" target="_blank" class="cf-link">Campfire</a></div>
+</div>
+<div class="member-card" data-search="minomusipapa pokémon go fujisawa 神奈川県">
+  <div class="mc-top"><span class="badge-1st">1st</span><span class="mc-date">2025/12/22</span></div>
+  <div class="mc-name">minomusipapa</div>
+  <div class="mc-group">🏕️ Pokémon GO Fujisawa</div>
+  <div class="mc-bottom"><a href="https://campfire.onelink.me/eBr8?af_dp=campfire://&amp;af_force_deeplink=true&amp;deep_link_sub1=cj1jbHVicyZjPWFlYzRmNzAwLTUwN2QtNDE3My05ZDg2LWZkYjE3YmVlY2NjOSZpPXRydWU=" target="_blank" class="cf-link">Campfire</a></div>
+</div>
+<div class="member-card" data-search="kappexe3 pokémon go support club 神奈川県">
+  <div class="mc-top"><span class="badge-1st">1st</span><span class="mc-date">6/5/2024</span></div>
+  <div class="mc-name">kappexe3</div>
+  <div class="mc-group">🏕️ Pokémon GO Support Club</div>
+  <div class="mc-bottom"><a href="https://campfire.onelink.me/eBr8?af_dp=campfire://&amp;af_force_deeplink=true&amp;deep_link_sub1=cj1jbHVicyZjPTJmZDg0MzdmLWRhNTQtNDQ1Ny1hOWIyLTlhZmI5M2VmMDRkYiZpPXRydWU=" target="_blank" class="cf-link">Campfire</a></div>
+</div>
+<div class="member-card" data-search="rouillepuipui pokémon go 宿河原 神奈川県">
+  <div class="mc-top"><span class="badge-1st">1st</span><span class="mc-date">7/22/2025</span></div>
+  <div class="mc-name">rouillePUIPUI</div>
+  <div class="mc-group">🏕️ Pokémon GO 宿河原</div>
+  <div class="mc-bottom"><a href="https://campfire.onelink.me/eBr8?af_dp=campfire://&amp;af_force_deeplink=true&amp;deep_link_sub1=cj1jbHVicyZjPTQ1Y2NmMWNiLWE4ZTMtNDVmYy1iMjU1LWVmZWMzOTUyMjA2NiZpPXRydWU=" target="_blank" class="cf-link">Campfire</a></div>
+</div>
+<div class="member-card" data-search="nori330513 yokohama go 神奈川県">
+  <div class="mc-top"><span class="badge-1st">1st</span><span class="mc-date">5/15/2025</span></div>
+  <div class="mc-name">nori330513</div>
+  <div class="mc-group">🏕️ YOKOHAMA GO</div>
+  <div class="mc-bottom"><a href="https://campfire.onelink.me/eBr8?af_dp=campfire://&amp;af_force_deeplink=true&amp;deep_link_sub1=cj1jbHVicyZjPTE4MTZhMzZkLTE1NjAtNDFlYy05NjJjLTRmMjdhZTNlMjIxZCZpPXRydWU=" target="_blank" class="cf-link">Campfire</a></div>
+</div>
+<div class="member-card" data-search="kazumanda0118 yokohama go 神奈川県" style="margin-left:12px;border-left:3px solid #fbbf24;padding-left:10px;">
+  <div class="mc-top"><span class="badge-2nd">2nd</span><span class="mc-date">3/2/2026</span></div>
+  <div class="mc-name">kazumanda0118</div>
+  <div class="mc-group">🏕️ YOKOHAMA GO</div>
+  <div class="mc-bottom"><a href="https://campfire.onelink.me/eBr8?af_dp=campfire://&amp;af_force_deeplink=true&amp;deep_link_sub1=cj1jbHVicyZjPTE4MTZhMzZkLTE1NjAtNDFlYy05NjJjLTRmMjdhZTNlMjIxZCZpPXRydWU=" target="_blank" class="cf-link">Campfire</a></div>
+</div>
+<div class="member-card" data-search="jun2tokyo ポケモン go 平塚市 神奈川県">
+  <div class="mc-top"><span class="badge-1st">1st</span><span class="mc-date">6/19/2024</span></div>
+  <div class="mc-name">Jun2Tokyo</div>
+  <div class="mc-group">🏕️ ポケモン GO 平塚市</div>
+  <div class="mc-bottom"><a href="https://campfire.onelink.me/eBr8?af_dp=campfire://&amp;af_force_deeplink=true&amp;deep_link_sub1=cj1jbHVicyZjPTJjMzVlMGMwLWZhMzUtNGUyMS1iMjdmLWQyZDAxNDIyY2NiOCZpPXRydWU=" target="_blank" class="cf-link">Campfire</a></div>
+</div>
+<div class="member-card" data-search="ipmedia ポケモン go 平塚市 神奈川県" style="margin-left:12px;border-left:3px solid #fbbf24;padding-left:10px;">
+  <div class="mc-top"><span class="badge-2nd">2nd</span><span class="mc-date">4/13/2026</span></div>
+  <div class="mc-name">ipmedia</div>
+  <div class="mc-group">🏕️ ポケモン GO 平塚市</div>
+  <div class="mc-bottom"><a href="https://campfire.onelink.me/eBr8?af_dp=campfire://&amp;af_force_deeplink=true&amp;deep_link_sub1=cj1jbHVicyZjPTJjMzVlMGMwLWZhMzUtNGUyMS1iMjdmLWQyZDAxNDIyY2NiOCZpPXRydWU=" target="_blank" class="cf-link">Campfire</a></div>
+</div>
+</div></div>
+</div>
+<div class="region-section"><div class="region-title">⛰️ 中部 <span class="badge">46名</span></div>
+<div class="pref-section" id="15_新潟県"><div class="pref-title">新潟県 <span class="pref-count">(8名)</span></div>
+<div class="members-grid">
+<div class="member-card" data-search="sekimendriver sadoisland walker 新潟県">
+  <div class="mc-top"><span class="badge-1st">1st</span><span class="mc-date">8/12/2025</span></div>
+  <div class="mc-name">sekimendriver</div>
+  <div class="mc-group">🏕️ sadoisland Walker</div>
+  <div class="mc-bottom"><a href="https://campfire.onelink.me/eBr8?af_dp=campfire://&amp;af_force_deeplink=true&amp;deep_link_sub1=cj1jbHVicyZjPTA1NDllMzRiLTk1ZTEtNGRmMC1iZmVkLTAxMGYwOTlkYmM5ZCZpPXRydWU=" target="_blank" class="cf-link">Campfire</a></div>
+</div>
+<div class="member-card" data-search="risarabbite ニイツシティ 新潟県">
+  <div class="mc-top"><span class="badge-1st">1st</span><span class="mc-date">5/15/2025</span></div>
+  <div class="mc-name">risarabbite</div>
+  <div class="mc-group">🏕️ ニイツシティ</div>
+  <div class="mc-bottom"><a href="https://campfire.onelink.me/eBr8?af_dp=campfire://&amp;af_force_deeplink=true&amp;deep_link_sub1=cj1jbHVicyZjPTk5NjZjYWU2LWU1MmItNDM1Yy1hNWM5LThjMjhlOWE4ZmY4MiZpPXRydWU=" target="_blank" class="cf-link">Campfire</a></div>
+</div>
+<div class="member-card" data-search="myuuuii ポケモン goで町おこし隊❀´- 新潟県">
+  <div class="mc-top"><span class="badge-1st">1st</span><span class="mc-date">7/22/2025</span></div>
+  <div class="mc-name">MyuuuII</div>
+  <div class="mc-group">🏕️ ポケモン GOで町おこし隊❀´-</div>
+  <div class="mc-bottom"><a href="https://campfire.onelink.me/eBr8?af_dp=campfire://&amp;af_force_deeplink=true&amp;deep_link_sub1=cj1jbHVicyZjPWFiNmIxMGE1LTgwZTAtNDdlZS05ZGJmLWI0ODJlMTU1YWM2ZiZpPXRydWU=" target="_blank" class="cf-link">Campfire</a></div>
+</div>
+<div class="member-card" data-search="saki59lp 加茂 ポケモン go 新潟県">
+  <div class="mc-top"><span class="badge-1st">1st</span><span class="mc-date">12/4/2023</span></div>
+  <div class="mc-name">Saki59LP</div>
+  <div class="mc-group">🏕️ 加茂 ポケモン GO</div>
+  <div class="mc-bottom"><a href="https://campfire.onelink.me/eBr8?af_dp=campfire://&amp;af_force_deeplink=true&amp;deep_link_sub1=cj1jbHVicyZjPWQ5YzFmODhmLTJlM2YtNDQ2Ny05NWUxLTQ4MjBkNmIwOTMzMiZpPXRydWU=" target="_blank" class="cf-link">Campfire</a></div>
+</div>
+<div class="member-card" data-search="mahina2n5 加茂 ポケモン go 新潟県" style="margin-left:12px;border-left:3px solid #fbbf24;padding-left:10px;">
+  <div class="mc-top"><span class="badge-2nd">2nd</span><span class="mc-date">5/14/2025</span></div>
+  <div class="mc-name">mahina2n5</div>
+  <div class="mc-group">🏕️ 加茂 ポケモン GO</div>
+  <div class="mc-bottom"><a href="https://campfire.onelink.me/eBr8?af_dp=campfire://&amp;af_force_deeplink=true&amp;deep_link_sub1=cj1jbHVicyZjPWQ5YzFmODhmLTJlM2YtNDQ2Ny05NWUxLTQ4MjBkNmIwOTMzMiZpPXRydWU=" target="_blank" class="cf-link">Campfire</a></div>
+</div>
+<div class="member-card" data-search="sakitolovers 加茂でwakwak ポケモン go 新潟県">
+  <div class="mc-top"><span class="badge-1st">1st</span><span class="mc-date">12/4/2023</span></div>
+  <div class="mc-name">SAKITOLOVERS</div>
+  <div class="mc-group">🏕️ 加茂でWAKWAK ポケモン GO</div>
+  <div class="mc-bottom"><a href="https://campfire.onelink.me/eBr8?af_dp=campfire://&amp;af_force_deeplink=true&amp;deep_link_sub1=cj1jbHVicyZjPTc4MGUzNDEwLTZlMjMtNGFmYi04NDNjLWFiNzViMDVlYzFlYyZpPXRydWU=" target="_blank" class="cf-link">Campfire</a></div>
+</div>
+<div class="member-card" data-search="suiduke 古町walker🐾 新潟県">
+  <div class="mc-top"><span class="badge-1st">1st</span><span class="mc-date">5/10/2024</span></div>
+  <div class="mc-name">suiduke</div>
+  <div class="mc-group">🏕️ 古町Walker🐾</div>
+  <div class="mc-bottom"><a href="https://campfire.onelink.me/eBr8?af_dp=campfire://&amp;af_force_deeplink=true&amp;deep_link_sub1=cj1jbHVicyZjPTQ5ZWQxZmFiLWE5ZmUtNDVhZC1hMjYyLTIwYzdhMjg3NTE4NyZpPXRydWU=" target="_blank" class="cf-link">Campfire</a></div>
+</div>
+<div class="member-card" data-search="miori717 県北 ポケモン go 新潟県">
+  <div class="mc-top"><span class="badge-1st">1st</span><span class="mc-date">5/15/2025</span></div>
+  <div class="mc-name">Miori717</div>
+  <div class="mc-group">🏕️ 県北 ポケモン GO</div>
+  <div class="mc-bottom"><a href="https://campfire.onelink.me/eBr8?af_dp=campfire://&amp;af_force_deeplink=true&amp;deep_link_sub1=cj1jbHVicyZjPTg0NTRhNjk3LTlkZWEtNDY5ZC1hNzczLTNmZWFlYmUyOTQ5MyZpPXRydWU=" target="_blank" class="cf-link">Campfire</a></div>
+</div>
+</div></div>
+<div class="pref-section" id="18_福井県"><div class="pref-title">福井県 <span class="pref-count">(2名)</span></div>
+<div class="members-grid">
+<div class="member-card" data-search="simoyuri 天空の星空 福井でgo 福井県">
+  <div class="mc-top"><span class="badge-1st">1st</span><span class="mc-date">6/19/2024</span></div>
+  <div class="mc-name">simoyuri</div>
+  <div class="mc-group">🏕️ 天空の星空 福井でGO</div>
+  <div class="mc-bottom"><a href="https://campfire.onelink.me/eBr8?af_dp=campfire://&amp;af_force_deeplink=true&amp;deep_link_sub1=cj1jbHVicyZjPTgyMjdiMTM3LTViZTUtNGNjNi1iOTBhLTRjMDYwYjYwNjk3MiZpPXRydWU=" target="_blank" class="cf-link">Campfire</a></div>
+</div>
+<div class="member-card" data-search="naokimanpgo 陶芸村でポケモン go 福井県">
+  <div class="mc-top"><span class="badge-1st">1st</span><span class="mc-date">5/15/2025</span></div>
+  <div class="mc-name">NaokimanPGO</div>
+  <div class="mc-group">🏕️ 陶芸村でポケモン GO</div>
+  <div class="mc-bottom"><a href="https://campfire.onelink.me/eBr8?af_dp=campfire://&amp;af_force_deeplink=true&amp;deep_link_sub1=cj1jbHVicyZjPTI1NTljOTVkLWQ3ZGItNDI4OC1hNTM4LTJjN2M1ZmVmMWU1YiZpPXRydWU=" target="_blank" class="cf-link">Campfire</a></div>
+</div>
+</div></div>
+<div class="pref-section" id="19_山梨県"><div class="pref-title">山梨県 <span class="pref-count">(5名)</span></div>
+<div class="members-grid">
+<div class="member-card" data-search="dra8max ポケモン go fujiyama 山梨県">
+  <div class="mc-top"><span class="badge-1st">1st</span><span class="mc-date">5/18/2024</span></div>
+  <div class="mc-name">dra8max</div>
+  <div class="mc-group">🏕️ ポケモン GO FUJIYAMA</div>
+  <div class="mc-bottom"><a href="https://campfire.onelink.me/eBr8?af_dp=campfire://&amp;af_force_deeplink=true&amp;deep_link_sub1=cj1jbHVicyZjPWMwZTEzMjZkLWEwM2UtNDNmZC1hN2E1LTViMDg4YmU0NDQ3MiZpPXRydWU=" target="_blank" class="cf-link">Campfire</a></div>
+</div>
+<div class="member-card" data-search="kyouheichango ポケモン go fujiyama 山梨県" style="margin-left:12px;border-left:3px solid #fbbf24;padding-left:10px;">
+  <div class="mc-top"><span class="badge-2nd">2nd</span><span class="mc-date">5/7/2025</span></div>
+  <div class="mc-name">kyouheichanGO</div>
+  <div class="mc-group">🏕️ ポケモン GO FUJIYAMA</div>
+  <div class="mc-bottom"><a href="https://campfire.onelink.me/eBr8?af_dp=campfire://&amp;af_force_deeplink=true&amp;deep_link_sub1=cj1jbHVicyZjPWMwZTEzMjZkLWEwM2UtNDNmZC1hN2E1LTViMDg4YmU0NDQ3MiZpPXRydWU=" target="_blank" class="cf-link">Campfire</a></div>
+</div>
+<div class="member-card" data-search="concreteseijin ポケモン go だいすきclub 山梨県">
+  <div class="mc-top"><span class="badge-1st">1st</span><span class="mc-date">4/9/2024</span></div>
+  <div class="mc-name">concreteseijin</div>
+  <div class="mc-group">🏕️ ポケモン GO だいすきCLUB</div>
+  <div class="mc-bottom"><a href="https://campfire.onelink.me/eBr8?af_dp=campfire://&amp;af_force_deeplink=true&amp;deep_link_sub1=cj1jbHVicyZjPTljNWZlM2RhLTY0NjQtNDVhMy1iOTQzLTNjOWY0NDUxMDNkNSZpPXRydWU=" target="_blank" class="cf-link">Campfire</a></div>
+</div>
+<div class="member-card" data-search="momomo1013 ポケモン go だいすきclub 山梨県" style="margin-left:12px;border-left:3px solid #fbbf24;padding-left:10px;">
+  <div class="mc-top"><span class="badge-2nd">2nd</span><span class="mc-date">4/9/2024</span></div>
+  <div class="mc-name">momomo1013</div>
+  <div class="mc-group">🏕️ ポケモン GO だいすきCLUB</div>
+  <div class="mc-bottom"><a href="https://campfire.onelink.me/eBr8?af_dp=campfire://&amp;af_force_deeplink=true&amp;deep_link_sub1=cj1jbHVicyZjPTljNWZlM2RhLTY0NjQtNDVhMy1iOTQzLTNjOWY0NDUxMDNkNSZpPXRydWU=" target="_blank" class="cf-link">Campfire</a></div>
+</div>
+<div class="member-card" data-search="oneforall01 ポケモン go どらねこ団 山梨県">
+  <div class="mc-top"><span class="badge-1st">1st</span><span class="mc-date">4/9/2024</span></div>
+  <div class="mc-name">ONEforAll01</div>
+  <div class="mc-group">🏕️ ポケモン GO どらねこ団</div>
+  <div class="mc-bottom"><a href="https://campfire.onelink.me/eBr8?af_dp=campfire://&amp;af_force_deeplink=true&amp;deep_link_sub1=cj1jbHVicyZjPTc2NmFjZTM5LTlkOGItNDIyNC04MzQ2LTBkN2ZlNGJkZDJiZSZpPXRydWU=" target="_blank" class="cf-link">Campfire</a></div>
+</div>
+</div></div>
+<div class="pref-section" id="20_長野県"><div class="pref-title">長野県 <span class="pref-count">(9名)</span></div>
+<div class="members-grid">
+<div class="member-card" data-search="onioni4 matsumoto darkrai 長野県">
+  <div class="mc-top"><span class="badge-1st">1st</span><span class="mc-date">6/6/2024</span></div>
+  <div class="mc-name">onioni4</div>
+  <div class="mc-group">🏕️ MaTSUmoto Darkrai</div>
+  <div class="mc-bottom"><a href="https://campfire.onelink.me/eBr8?af_dp=campfire://&amp;af_force_deeplink=true&amp;deep_link_sub1=cj1jbHVicyZjPWJmM2RjNTAwLTM4NWYtNDIxMy05MDljLTMxYTIyYWEyNmFmMyZpPXRydWU=" target="_blank" class="cf-link">Campfire</a></div>
+</div>
+<div class="member-card" data-search="lutowalker matsumoto darkrai 長野県" style="margin-left:12px;border-left:3px solid #fbbf24;padding-left:10px;">
+  <div class="mc-top"><span class="badge-2nd">2nd</span><span class="mc-date">5/7/2025</span></div>
+  <div class="mc-name">lutowalker</div>
+  <div class="mc-group">🏕️ MaTSUmoto Darkrai</div>
+  <div class="mc-bottom"><a href="https://campfire.onelink.me/eBr8?af_dp=campfire://&amp;af_force_deeplink=true&amp;deep_link_sub1=cj1jbHVicyZjPWJmM2RjNTAwLTM4NWYtNDIxMy05MDljLTMxYTIyYWEyNmFmMyZpPXRydWU=" target="_blank" class="cf-link">Campfire</a></div>
+</div>
+<div class="member-card" data-search="sup0222 pokémon go 東信reborn 長野県">
+  <div class="mc-top"><span class="badge-1st">1st</span><span class="mc-date">6/5/2026</span></div>
+  <div class="mc-name">sup0222</div>
+  <div class="mc-group">🏕️ Pokémon GO 東信REBORN</div>
+  <div class="mc-bottom"><a href="https://campfire-rel-admin.eng.nianticlabs.com/clubs?clubId=087c2c07-2e62-4e40-99e5-24ab368911d6" target="_blank" class="cf-link">Campfire</a></div>
+</div>
+<div class="member-card" data-search="musasirkozirou ポケモン go 昼神 長野県">
+  <div class="mc-top"><span class="badge-1st">1st</span><span class="mc-date">11/10/2025</span></div>
+  <div class="mc-name">musasiRkozirou</div>
+  <div class="mc-group">🏕️ ポケモン GO 昼神</div>
+  <div class="mc-bottom"><a href="https://campfire.onelink.me/eBr8?af_dp=campfire://&amp;af_force_deeplink=true&amp;deep_link_sub1=cj1jbHVicyZjPTQ1ZDhhZDQyLWQ2ODQtNDljNC1iNWYwLWU1OGFkYWM5YWJmMSZpPXRydWU=" target="_blank" class="cf-link">Campfire</a></div>
+</div>
+<div class="member-card" data-search="raikho2 ポケモン go 長野 長野県">
+  <div class="mc-top"><span class="badge-1st">1st</span><span class="mc-date">5/15/2025</span></div>
+  <div class="mc-name">raikho2</div>
+  <div class="mc-group">🏕️ ポケモン GO 長野</div>
+  <div class="mc-bottom"><a href="https://campfire.onelink.me/eBr8?af_dp=campfire://&amp;af_force_deeplink=true&amp;deep_link_sub1=cj1jbHVicyZjPTBmOTgyNjkxLTY0OWUtNGQ3MS1hYzg2LTIxNTYyOTM5Y2FmYyZpPXRydWU=" target="_blank" class="cf-link">Campfire</a></div>
+</div>
+<div class="member-card" data-search="musan85 ポケモン go 長野 長野県" style="margin-left:12px;border-left:3px solid #fbbf24;padding-left:10px;">
+  <div class="mc-top"><span class="badge-2nd">2nd</span><span class="mc-date">10/7/2025</span></div>
+  <div class="mc-name">musan85</div>
+  <div class="mc-group">🏕️ ポケモン GO 長野</div>
+  <div class="mc-bottom"><a href="https://campfire.onelink.me/eBr8?af_dp=campfire://&amp;af_force_deeplink=true&amp;deep_link_sub1=cj1jbHVicyZjPTBmOTgyNjkxLTY0OWUtNGQ3MS1hYzg2LTIxNTYyOTM5Y2FmYyZpPXRydWU=" target="_blank" class="cf-link">Campfire</a></div>
+</div>
+<div class="member-card" data-search="guchiex ポケモン go_南箕輪_箕輪 長野県">
+  <div class="mc-top"><span class="badge-1st">1st</span><span class="mc-date">5/14/2025</span></div>
+  <div class="mc-name">GuchiEx</div>
+  <div class="mc-group">🏕️ ポケモン GO_南箕輪_箕輪</div>
+  <div class="mc-bottom"><a href="https://campfire.onelink.me/eBr8?af_dp=campfire://&amp;af_force_deeplink=true&amp;deep_link_sub1=cj1jbHVicyZjPTJlNWZlZTdjLTNlOGYtNDkxMS05OTdiLWZkMDUxMDkxMWFkOSZpPXRydWU=" target="_blank" class="cf-link">Campfire</a></div>
+</div>
+<div class="member-card" data-search="yuckie555 辰野町 ポケモン go 長野県">
+  <div class="mc-top"><span class="badge-1st">1st</span><span class="mc-date">6/19/2024</span></div>
+  <div class="mc-name">yuckie555</div>
+  <div class="mc-group">🏕️ 辰野町 ポケモン GO</div>
+  <div class="mc-bottom"><a href="https://campfire.onelink.me/eBr8?af_dp=campfire://&amp;af_force_deeplink=true&amp;deep_link_sub1=cj1jbHVicyZjPWM5MjQ0OWM4LTIzODgtNGQ5My1iMjg5LTZjN2IwYWQ0YzQ5NiZpPXRydWU=" target="_blank" class="cf-link">Campfire</a></div>
+</div>
+<div class="member-card" data-search="peemanheaven 辰野町 ポケモン go 長野県" style="margin-left:12px;border-left:3px solid #fbbf24;padding-left:10px;">
+  <div class="mc-top"><span class="badge-2nd">2nd</span><span class="mc-date">6/19/2024</span></div>
+  <div class="mc-name">PeemanHeaven</div>
+  <div class="mc-group">🏕️ 辰野町 ポケモン GO</div>
+  <div class="mc-bottom"><a href="https://campfire.onelink.me/eBr8?af_dp=campfire://&amp;af_force_deeplink=true&amp;deep_link_sub1=cj1jbHVicyZjPWM5MjQ0OWM4LTIzODgtNGQ5My1iMjg5LTZjN2IwYWQ0YzQ5NiZpPXRydWU=" target="_blank" class="cf-link">Campfire</a></div>
+</div>
+</div></div>
+<div class="pref-section" id="21_岐阜県"><div class="pref-title">岐阜県 <span class="pref-count">(6名)</span></div>
+<div class="members-grid">
+<div class="member-card" data-search="cocotamv gifu☆ポケモン go community 岐阜県">
+  <div class="mc-top"><span class="badge-1st">1st</span><span class="mc-date">5/20/2025</span></div>
+  <div class="mc-name">cocotamv</div>
+  <div class="mc-group">🏕️ GIFU☆ポケモン GO community</div>
+  <div class="mc-bottom"><a href="https://campfire.onelink.me/eBr8?af_dp=campfire://&amp;af_force_deeplink=true&amp;deep_link_sub1=cj1jbHVicyZjPTliM2UwNjA4LTY2NmUtNGQxYy04MGIwLTFlN2I0OGY5M2ZiOCZpPXRydWU=" target="_blank" class="cf-link">Campfire</a></div>
+</div>
+<div class="member-card" data-search="shinya1208 pokémon go gifusoul 岐阜県">
+  <div class="mc-top"><span class="badge-1st">1st</span><span class="mc-date">5/15/2025</span></div>
+  <div class="mc-name">shinya1208</div>
+  <div class="mc-group">🏕️ Pokémon GO GifuSoul</div>
+  <div class="mc-bottom"><a href="https://campfire.onelink.me/eBr8?af_dp=campfire://&amp;af_force_deeplink=true&amp;deep_link_sub1=cj1jbHVicyZjPTFhM2M1ZTI3LWUwNGEtNDgxOC1iMzg1LTc4MmQ1OGQzODY3YiZpPXRydWU=" target="_blank" class="cf-link">Campfire</a></div>
+</div>
+<div class="member-card" data-search="oxmaoiamxo pokémon go 岐阜県民たまり場 岐阜県">
+  <div class="mc-top"><span class="badge-1st">1st</span><span class="mc-date">6/19/2024</span></div>
+  <div class="mc-name">oXmaoiamXo</div>
+  <div class="mc-group">🏕️ Pokémon GO 岐阜県民たまり場</div>
+  <div class="mc-bottom"><a href="https://campfire.onelink.me/eBr8?af_dp=campfire://&amp;af_force_deeplink=true&amp;deep_link_sub1=cj1jbHVicyZjPWE3OTQzZDNiLTlhMTUtNGViMy1iOTAzLTJhN2NlNTcyMTllZSZpPXRydWU=" target="_blank" class="cf-link">Campfire</a></div>
+</div>
+<div class="member-card" data-search="chururururutaro pokémon go 村 ＠各務原 岐阜県">
+  <div class="mc-top"><span class="badge-1st">1st</span><span class="mc-date">5/10/2024</span></div>
+  <div class="mc-name">chururururutaro</div>
+  <div class="mc-group">🏕️ Pokémon GO 村 ＠各務原</div>
+  <div class="mc-bottom"><a href="https://campfire.onelink.me/eBr8?af_dp=campfire://&amp;af_force_deeplink=true&amp;deep_link_sub1=cj1jbHVicyZjPWQ5YWYyOWFjLWFhMGQtNGYxNS1iMTI2LWEwMThlYTYzMjgxNCZpPXRydWU=" target="_blank" class="cf-link">Campfire</a></div>
+</div>
+<div class="member-card" data-search="hiro25493 ポケモン go @大垣•西濃 岐阜県">
+  <div class="mc-top"><span class="badge-1st">1st</span><span class="mc-date">4/9/2024</span></div>
+  <div class="mc-name">hiro25493</div>
+  <div class="mc-group">🏕️ ポケモン GO @大垣•西濃</div>
+  <div class="mc-bottom"><a href="https://campfire.onelink.me/eBr8?af_dp=campfire://&amp;af_force_deeplink=true&amp;deep_link_sub1=cj1jbHVicyZjPTUxNjM4NDgzLTgwZDItNGQ2Mi04MjQ5LTVmZTZiNWUwNjM2ZCZpPXRydWU=" target="_blank" class="cf-link">Campfire</a></div>
+</div>
+<div class="member-card" data-search="rokkaasahi0717 ポケモン go @大垣•西濃 岐阜県" style="margin-left:12px;border-left:3px solid #fbbf24;padding-left:10px;">
+  <div class="mc-top"><span class="badge-2nd">2nd</span><span class="mc-date">5/20/2025</span></div>
+  <div class="mc-name">RokkaAsahi0717</div>
+  <div class="mc-group">🏕️ ポケモン GO @大垣•西濃</div>
+  <div class="mc-bottom"><a href="https://campfire.onelink.me/eBr8?af_dp=campfire://&amp;af_force_deeplink=true&amp;deep_link_sub1=cj1jbHVicyZjPTUxNjM4NDgzLTgwZDItNGQ2Mi04MjQ5LTVmZTZiNWUwNjM2ZCZpPXRydWU=" target="_blank" class="cf-link">Campfire</a></div>
+</div>
+</div></div>
+<div class="pref-section" id="22_静岡県"><div class="pref-title">静岡県 <span class="pref-count">(4名)</span></div>
+<div class="members-grid">
+<div class="member-card" data-search="yossi00000 ポケモン go @浜松 静岡県">
+  <div class="mc-top"><span class="badge-1st">1st</span><span class="mc-date">5/14/2025</span></div>
+  <div class="mc-name">yossi00000</div>
+  <div class="mc-group">🏕️ ポケモン GO @浜松</div>
+  <div class="mc-bottom"><a href="https://campfire.onelink.me/eBr8?af_dp=campfire://&amp;af_force_deeplink=true&amp;deep_link_sub1=cj1jbHVicyZjPTQzN2ZiYWFjLWQ5MjAtNGE0Ny1iODkyLTU3OTRjYjhmZjc0OCZpPXRydWU=" target="_blank" class="cf-link">Campfire</a></div>
+</div>
+<div class="member-card" data-search="terubowz0516 ポケモン go 静岡東部 静岡県">
+  <div class="mc-top"><span class="badge-1st">1st</span><span class="mc-date">5/15/2025</span></div>
+  <div class="mc-name">TeruBowZ0516</div>
+  <div class="mc-group">🏕️ ポケモン GO 静岡東部</div>
+  <div class="mc-bottom"><a href="https://campfire.onelink.me/eBr8?af_dp=campfire://&amp;af_force_deeplink=true&amp;deep_link_sub1=cj1jbHVicyZjPWNkZmIxZTYwLTI3MmItNGY3Ni05MzIwLWFhNTBmNTc3MDE5YyZpPXRydWU=" target="_blank" class="cf-link">Campfire</a></div>
+</div>
+<div class="member-card" data-search="hiphop19464 掛川の中心でポケモン大好きと叫ぶ会 静岡県">
+  <div class="mc-top"><span class="badge-1st">1st</span><span class="mc-date">9/26/2025</span></div>
+  <div class="mc-name">hiphop19464</div>
+  <div class="mc-group">🏕️ 掛川の中心でポケモン大好きと叫ぶ会</div>
+  <div class="mc-bottom"><a href="https://campfire.onelink.me/eBr8?af_dp=campfire://&amp;af_force_deeplink=true&amp;deep_link_sub1=cj1jbHVicyZjPWE2OTIwY2U0LTIxOWEtNDU2NC05MzViLThhMDc0ZDU5Y2E0MiZpPXRydWU=" target="_blank" class="cf-link">Campfire</a></div>
+</div>
+<div class="member-card" data-search="hirobe2016 浜松ポケモングループ 静岡県">
+  <div class="mc-top"><span class="badge-1st">1st</span><span class="mc-date">5/15/2025</span></div>
+  <div class="mc-name">hirobe2016</div>
+  <div class="mc-group">🏕️ 浜松ポケモングループ</div>
+  <div class="mc-bottom"><a href="https://campfire.onelink.me/eBr8?af_dp=campfire://&amp;af_force_deeplink=true&amp;deep_link_sub1=cj1jbHVicyZjPWMyZmM2ZGQ3LTc1Y2MtNGFmOS1iOGM4LTg3YjAyN2NjOTM1NyZpPXRydWU=" target="_blank" class="cf-link">Campfire</a></div>
+</div>
+</div></div>
+<div class="pref-section" id="23_愛知県"><div class="pref-title">愛知県 <span class="pref-count">(12名)</span></div>
+<div class="members-grid">
+<div class="member-card" data-search="amanojago go★とよあけ(go*toyoake) 愛知県">
+  <div class="mc-top"><span class="badge-1st">1st</span><span class="mc-date">5/20/2025</span></div>
+  <div class="mc-name">amanojago</div>
+  <div class="mc-group">🏕️ GO★とよあけ(GO*Toyoake)</div>
+  <div class="mc-bottom"><a href="https://campfire.onelink.me/eBr8?af_dp=campfire://&amp;af_force_deeplink=true&amp;deep_link_sub1=cj1jbHVicyZjPTllNDVmYmZkLWFjMmQtNGE5ZC04Y2YzLTkxMTEwNTE3ODFlOSZpPXRydWU=" target="_blank" class="cf-link">Campfire</a></div>
+</div>
+<div class="member-card" data-search="nomucho nomucho community 愛知県">
+  <div class="mc-top"><span class="badge-1st">1st</span><span class="mc-date">4/9/2024</span></div>
+  <div class="mc-name">nomucho</div>
+  <div class="mc-group">🏕️ nomucho community</div>
+  <div class="mc-bottom"><a href="https://campfire.onelink.me/eBr8?af_dp=campfire://&amp;af_force_deeplink=true&amp;deep_link_sub1=cj1jbHVicyZjPWU3MzlhZTM3LWE3NjItNGNjZC04Y2IxLTRmMzA2NmU0MTEwNiZpPXRydWU=" target="_blank" class="cf-link">Campfire</a></div>
+</div>
+<div class="member-card" data-search="ryouhei98 pokémon go 138club 愛知県">
+  <div class="mc-top"><span class="badge-1st">1st</span><span class="mc-date">5/15/2025</span></div>
+  <div class="mc-name">ryouhei98</div>
+  <div class="mc-group">🏕️ Pokémon GO 138Club</div>
+  <div class="mc-bottom"><a href="https://campfire.onelink.me/eBr8?af_dp=campfire://&amp;af_force_deeplink=true&amp;deep_link_sub1=cj1jbHVicyZjPTk0NmNmNDQyLWIwNmItNDg4YS04OWJjLWE5Y2Y0ODQ1NWNiMCZpPXRydWU=" target="_blank" class="cf-link">Campfire</a></div>
+</div>
+<div class="member-card" data-search="poivoit pokémon go 安城 愛知県">
+  <div class="mc-top"><span class="badge-1st">1st</span><span class="mc-date">8/12/2025</span></div>
+  <div class="mc-name">POIVOIT</div>
+  <div class="mc-group">🏕️ Pokémon GO 安城</div>
+  <div class="mc-bottom"><a href="https://campfire.onelink.me/eBr8?af_dp=campfire://&amp;af_force_deeplink=true&amp;deep_link_sub1=cj1jbHVicyZjPTc2OWVkNDJhLWU0MmQtNDEzNy05Y2M2LWY2NDQ5Y2U0OTgyNCZpPXRydWU=" target="_blank" class="cf-link">Campfire</a></div>
+</div>
+<div class="member-card" data-search="lambo1130 team 758 愛知県">
+  <div class="mc-top"><span class="badge-1st">1st</span><span class="mc-date">5/7/2025</span></div>
+  <div class="mc-name">Lambo1130</div>
+  <div class="mc-group">🏕️ TEAM 758</div>
+  <div class="mc-bottom"><a href="https://campfire.onelink.me/eBr8?af_dp=campfire://&amp;af_force_deeplink=true&amp;deep_link_sub1=cj1jbHVicyZjPTZlZGM1MThkLTcwODEtNDhlZS04NzU5LWQwNjc2MDc1ZWIzZCZpPXRydWU=" target="_blank" class="cf-link">Campfire</a></div>
+</div>
+<div class="member-card" data-search="kiraramiu みゆきgo 愛知県">
+  <div class="mc-top"><span class="badge-1st">1st</span><span class="mc-date">5/15/2025</span></div>
+  <div class="mc-name">kiraramiu</div>
+  <div class="mc-group">🏕️ みゆきGO</div>
+  <div class="mc-bottom"><a href="https://campfire.onelink.me/eBr8?af_dp=campfire://&amp;af_force_deeplink=true&amp;deep_link_sub1=cj1jbHVicyZjPTYyYmZkMDE2LTIwZjYtNDAwMy05NTYwLTZjNjRiZTExZmRhYSZpPXRydWU=" target="_blank" class="cf-link">Campfire</a></div>
+</div>
+<div class="member-card" data-search="kazu06240119 やろまい刈谷でgo 愛知県">
+  <div class="mc-top"><span class="badge-1st">1st</span><span class="mc-date">6/19/2024</span></div>
+  <div class="mc-name">kazu06240119</div>
+  <div class="mc-group">🏕️ やろまい刈谷でGO</div>
+  <div class="mc-bottom"><a href="https://campfire.onelink.me/eBr8?af_dp=campfire://&amp;af_force_deeplink=true&amp;deep_link_sub1=cj1jbHVicyZjPWU4MWUwYzI4LWZjNDctNDc5OS04MzRjLTc0NmZjNzc5NTdkMCZpPXRydWU=" target="_blank" class="cf-link">Campfire</a></div>
+</div>
+<div class="member-card" data-search="gon700s 夜活 pokémon go 愛知県" style="margin-left:12px;border-left:3px solid #fbbf24;padding-left:10px;">
+  <div class="mc-top"><span class="badge-2nd">2nd</span><span class="mc-date">3/17/2026</span></div>
+  <div class="mc-name">GoN700S</div>
+  <div class="mc-group">🏕️ 夜活 Pokémon GO</div>
+  <div class="mc-bottom"><a href="https://campfire.onelink.me/eBr8?af_dp" target="_blank" class="cf-link">Campfire</a></div>
+</div>
+<div class="member-card" data-search="keikoooooooooo3 西三河 夜活部 愛知県">
+  <div class="mc-top"><span class="badge-1st">1st</span><span class="mc-date">9/26/2025</span></div>
+  <div class="mc-name">Keikoooooooooo3</div>
+  <div class="mc-group">🏕️ 西三河 夜活部</div>
+  <div class="mc-bottom"><a href="https://campfire.onelink.me/eBr8?af_dp=campfire://&amp;af_force_deeplink=true&amp;deep_link_sub1=cj1jbHVicyZjPWQ2NDJlMmIwLTQ2ZjgtNGYwZC04YzcwLTQ4NDg5MTFiYTNkZiZpPXRydWU=" target="_blank" class="cf-link">Campfire</a></div>
+</div>
+<div class="member-card" data-search="pikachuluv46 西尾でgo 愛知県">
+  <div class="mc-top"><span class="badge-1st">1st</span><span class="mc-date">6/5/2026</span></div>
+  <div class="mc-name">PikachuLuv46</div>
+  <div class="mc-group">🏕️ 西尾でGO</div>
+  <div class="mc-bottom"><a href="https://campfire-rel-admin.eng.nianticlabs.com/clubs?clubId=53aa2314-b498-427d-a1de-e7769d6c0074" target="_blank" class="cf-link">Campfire</a></div>
+</div>
+<div class="member-card" data-search="flowerveil0669 西尾張でgo 愛知県">
+  <div class="mc-top"><span class="badge-1st">1st</span><span class="mc-date">4/9/2024</span></div>
+  <div class="mc-name">FlowerVeil0669</div>
+  <div class="mc-group">🏕️ 西尾張でGO</div>
+  <div class="mc-bottom"><a href="https://campfire.onelink.me/eBr8?af_dp=campfire://&amp;af_force_deeplink=true&amp;deep_link_sub1=cj1jbHVicyZjPTE5YWZkMTI2LTc2YjAtNGZlNC04NGY2LWMzNzgyMTg3NzIwMiZpPXRydWU=" target="_blank" class="cf-link">Campfire</a></div>
+</div>
+<div class="member-card" data-search="massan330 西尾張でgo 愛知県" style="margin-left:12px;border-left:3px solid #fbbf24;padding-left:10px;">
+  <div class="mc-top"><span class="badge-2nd">2nd</span><span class="mc-date">5/15/2025</span></div>
+  <div class="mc-name">massan330</div>
+  <div class="mc-group">🏕️ 西尾張でGO</div>
+  <div class="mc-bottom"><a href="https://campfire.onelink.me/eBr8?af_dp=campfire://&amp;af_force_deeplink=true&amp;deep_link_sub1=cj1jbHVicyZjPTE5YWZkMTI2LTc2YjAtNGZlNC04NGY2LWMzNzgyMTg3NzIwMiZpPXRydWU=" target="_blank" class="cf-link">Campfire</a></div>
+</div>
+</div></div>
+</div>
+<div class="region-section"><div class="region-title">⛩️ 近畿 <span class="badge">31名</span></div>
+<div class="pref-section" id="24_三重県"><div class="pref-title">三重県 <span class="pref-count">(2名)</span></div>
+<div class="members-grid">
+<div class="member-card" data-search="tamaoq84 ポケモン go 津 三重県">
+  <div class="mc-top"><span class="badge-1st">1st</span><span class="mc-date">6/5/2024</span></div>
+  <div class="mc-name">Tamaoq84</div>
+  <div class="mc-group">🏕️ ポケモン GO 津</div>
+  <div class="mc-bottom"><a href="https://campfire.onelink.me/eBr8?af_dp=campfire://&amp;af_force_deeplink=true&amp;deep_link_sub1=cj1jbHVicyZjPTEzMzA4YzA3LTA5ZWItNDI5NS1hZDlmLWU2MDUxMGRhMTg3MyZpPXRydWU=" target="_blank" class="cf-link">Campfire</a></div>
+</div>
+<div class="member-card" data-search="harunyasu39 ポケモン go 津 三重県" style="margin-left:12px;border-left:3px solid #fbbf24;padding-left:10px;">
+  <div class="mc-top"><span class="badge-2nd">2nd</span><span class="mc-date">5/7/2025</span></div>
+  <div class="mc-name">HARUNYASU39</div>
+  <div class="mc-group">🏕️ ポケモン GO 津</div>
+  <div class="mc-bottom"><a href="https://campfire.onelink.me/eBr8?af_dp=campfire://&amp;af_force_deeplink=true&amp;deep_link_sub1=cj1jbHVicyZjPTEzMzA4YzA3LTA5ZWItNDI5NS1hZDlmLWU2MDUxMGRhMTg3MyZpPXRydWU=" target="_blank" class="cf-link">Campfire</a></div>
+</div>
+</div></div>
+<div class="pref-section" id="25_滋賀県"><div class="pref-title">滋賀県 <span class="pref-count">(4名)</span></div>
+<div class="members-grid">
+<div class="member-card" data-search="xt0m0x pokémon go koka! 滋賀県">
+  <div class="mc-top"><span class="badge-1st">1st</span><span class="mc-date">5/20/2025</span></div>
+  <div class="mc-name">xt0m0x</div>
+  <div class="mc-group">🏕️ Pokémon GO Koka!</div>
+  <div class="mc-bottom"><a href="https://campfire.onelink.me/eBr8?af_dp=campfire://&amp;af_force_deeplink=true&amp;deep_link_sub1=cj1jbHVicyZjPTZjMDQyZGUxLThkMzAtNGM5Ny1hNmQ5LWYwZTRiNWIxMDdkMyZpPXRydWU=" target="_blank" class="cf-link">Campfire</a></div>
+</div>
+<div class="member-card" data-search="arc2399 pokémon go yokaichi 滋賀県">
+  <div class="mc-top"><span class="badge-1st">1st</span><span class="mc-date">11/10/2025</span></div>
+  <div class="mc-name">Arc2399</div>
+  <div class="mc-group">🏕️ POKÉMON GO YOKAICHI</div>
+  <div class="mc-bottom"><a href="https://campfire.onelink.me/eBr8?af_dp=campfire://&amp;af_force_deeplink=true&amp;deep_link_sub1=cj1jbHVicyZjPWUzZGU2MTdjLWM3MTMtNGFhMS1hMjFmLTc3Y2M1NzE5YTJjZCZpPXRydWU=" target="_blank" class="cf-link">Campfire</a></div>
+</div>
+<div class="member-card" data-search="akaho01 pokémon go 彦根 滋賀県">
+  <div class="mc-top"><span class="badge-1st">1st</span><span class="mc-date">12/4/2023</span></div>
+  <div class="mc-name">akaho01</div>
+  <div class="mc-group">🏕️ Pokémon GO 彦根</div>
+  <div class="mc-bottom"><a href="https://campfire.onelink.me/eBr8?af_dp=campfire://&amp;af_force_deeplink=true&amp;deep_link_sub1=cj1jbHVicyZjPTUyZTE1ZmZiLTVhZjAtNDhhMy05NmJmLTU2YzAyYTExYjcxZSZpPXRydWU=" target="_blank" class="cf-link">Campfire</a></div>
+</div>
+<div class="member-card" data-search="satochin7mama ポケモン go 滋賀南部 滋賀県">
+  <div class="mc-top"><span class="badge-1st">1st</span><span class="mc-date">12/4/2023</span></div>
+  <div class="mc-name">satochin7mama</div>
+  <div class="mc-group">🏕️ ポケモン GO 滋賀南部</div>
+  <div class="mc-bottom"><a href="https://campfire.onelink.me/eBr8?af_dp=campfire://&amp;af_force_deeplink=true&amp;deep_link_sub1=cj1jbHVicyZjPTNhNjE2YjgxLWM4M2YtNDVlMy05YTU2LTdiZWYzYzA3N2YzZCZpPXRydWU=" target="_blank" class="cf-link">Campfire</a></div>
+</div>
+</div></div>
+<div class="pref-section" id="26_京都府"><div class="pref-title">京都府 <span class="pref-count">(6名)</span></div>
+<div class="members-grid">
+<div class="member-card" data-search="0kenwhisky cara kyoto（京都ポケモン go） 京都府">
+  <div class="mc-top"><span class="badge-1st">1st</span><span class="mc-date">2026/1/5</span></div>
+  <div class="mc-name">0Kenwhisky</div>
+  <div class="mc-group">🏕️ Cara Kyoto（京都ポケモン GO）</div>
+  <div class="mc-bottom"><a href="https://campfire.onelink.me/eBr8?af_dp=campfire://&amp;af_force_deeplink=true&amp;deep_link_sub1=cj1jbHVicyZjPTg0Y2I5NmZkLWYwM2UtNGQ0OS05YWUzLTc3NmM5MWFhYTlkMiZpPXRydWU=" target="_blank" class="cf-link">Campfire</a></div>
+</div>
+<div class="member-card" data-search="kujira1 cara kyoto（京都ポケモン go） 京都府" style="margin-left:12px;border-left:3px solid #fbbf24;padding-left:10px;">
+  <div class="mc-top"><span class="badge-2nd">2nd</span><span class="mc-date">2026/2/2</span></div>
+  <div class="mc-name">kujira1</div>
+  <div class="mc-group">🏕️ Cara Kyoto（京都ポケモン GO）</div>
+  <div class="mc-bottom"><a href="https://campfire.onelink.me/eBr8?af_dp=campfire://&amp;af_force_deeplink=true&amp;deep_link_sub1=cj1jbHVicyZjPTg0Y2I5NmZkLWYwM2UtNGQ0OS05YWUzLTc3NmM5MWFhYTlkMiZpPXRydWU=" target="_blank" class="cf-link">Campfire</a></div>
+</div>
+<div class="member-card" data-search="kayu7878 pokémon go @京都福知山 京都府">
+  <div class="mc-top"><span class="badge-1st">1st</span><span class="mc-date">3/17/2026</span></div>
+  <div class="mc-name">kayu7878</div>
+  <div class="mc-group">🏕️ Pokémon GO @京都福知山</div>
+  <div class="mc-bottom"><a href="https://campfire.onelink.me/eBr8?af_dp=campfire://&amp;af_force_deeplink=true&amp;deep_link_sub1=cj1jbHVicyZjPTgyMWU4ZDdhLWExNDUtNGQ3ZS04YzViLTY5ZTYxZjY5NDkyZiZpPXRydWU=" target="_blank" class="cf-link">Campfire</a></div>
+</div>
+<div class="member-card" data-search="higenoottn pokémon go in 舞鶴 京都府">
+  <div class="mc-top"><span class="badge-1st">1st</span><span class="mc-date">9/16/2025</span></div>
+  <div class="mc-name">higenoottn</div>
+  <div class="mc-group">🏕️ Pokémon GO in 舞鶴</div>
+  <div class="mc-bottom"><a href="https://campfire.onelink.me/eBr8?af_dp=campfire://&amp;af_force_deeplink=true&amp;deep_link_sub1=cj1jbHVicyZjPWNkOGVmMTMyLTY0NWYtNDE1YS1hNGNiLWJmN2UzM2E1NmZlNSZpPXRydWU=" target="_blank" class="cf-link">Campfire</a></div>
+</div>
+<div class="member-card" data-search="369susanoo pokémon go kyoto 京都府">
+  <div class="mc-top"><span class="badge-1st">1st</span><span class="mc-date">5/20/2025</span></div>
+  <div class="mc-name">369susanoo</div>
+  <div class="mc-group">🏕️ Pokémon GO KYOTO</div>
+  <div class="mc-bottom"><a href="https://campfire.onelink.me/eBr8?af_dp=campfire://&amp;af_force_deeplink=true&amp;deep_link_sub1=cj1jbHVicyZjPTgyMDBjZjJhLWEwMzQtNDI3ZC04YTg5LWIyNTFkYzNiN2Y0NiZpPXRydWU=" target="_blank" class="cf-link">Campfire</a></div>
+</div>
+<div class="member-card" data-search="510510nikomou pokémon go kyoto 京都府" style="margin-left:12px;border-left:3px solid #fbbf24;padding-left:10px;">
+  <div class="mc-top"><span class="badge-2nd">2nd</span><span class="mc-date">7/22/2025</span></div>
+  <div class="mc-name">510510nikomou</div>
+  <div class="mc-group">🏕️ Pokémon GO KYOTO</div>
+  <div class="mc-bottom"><a href="https://campfire.onelink.me/eBr8?af_dp=campfire://&amp;af_force_deeplink=true&amp;deep_link_sub1=cj1jbHVicyZjPTgyMDBjZjJhLWEwMzQtNDI3ZC04YTg5LWIyNTFkYzNiN2Y0NiZpPXRydWU=" target="_blank" class="cf-link">Campfire</a></div>
+</div>
+</div></div>
+<div class="pref-section" id="27_大阪府"><div class="pref-title">大阪府 <span class="pref-count">(10名)</span></div>
+<div class="members-grid">
+<div class="member-card" data-search="sakura6823 go to今城塚古墳公園 大阪府">
+  <div class="mc-top"><span class="badge-1st">1st</span><span class="mc-date">5/15/2025</span></div>
+  <div class="mc-name">SAKURA6823</div>
+  <div class="mc-group">🏕️ GO to今城塚古墳公園</div>
+  <div class="mc-bottom"><a href="https://campfire.onelink.me/eBr8?af_dp=campfire://&amp;af_force_deeplink=true&amp;deep_link_sub1=cj1jbHVicyZjPTA0YWFkNDJhLWFkODMtNDY2Zi04Mzc3LTQ1N2RiNjgwZTdjMyZpPXRydWU=" target="_blank" class="cf-link">Campfire</a></div>
+</div>
+<div class="member-card" data-search="hishii1008 nanba.togo community 大阪府">
+  <div class="mc-top"><span class="badge-1st">1st</span><span class="mc-date">5/7/2025</span></div>
+  <div class="mc-name">hishii1008</div>
+  <div class="mc-group">🏕️ NANBA.toGO Community</div>
+  <div class="mc-bottom"><a href="https://campfire.onelink.me/eBr8?af_dp=campfire://&amp;af_force_deeplink=true&amp;deep_link_sub1=cj1jbHVicyZjPTEzMjFlZWFlLTJjMjUtNGYxOS1iYzhiLTk2YmI5YzA2MmMzYiZpPXRydWU=" target="_blank" class="cf-link">Campfire</a></div>
+</div>
+<div class="member-card" data-search="marimokkori0303 nanba.togo community 大阪府">
+  <div class="mc-top"><span class="badge-1st">1st</span><span class="mc-date">6/6/2024</span></div>
+  <div class="mc-name">marimokkori0303</div>
+  <div class="mc-group">🏕️ NANBA.toGO Community</div>
+  <div class="mc-bottom"><a href="https://campfire.onelink.me/eBr8?af_dp=campfire://&amp;af_force_deeplink=true&amp;deep_link_sub1=cj1jbHVicyZjPTEzMjFlZWFlLTJjMjUtNGYxOS1iYzhiLTk2YmI5YzA2MmMzYiZpPXRydWU=" target="_blank" class="cf-link">Campfire</a></div>
+</div>
+<div class="member-card" data-search="masaseo pokémon go in 高槻 大阪府">
+  <div class="mc-top"><span class="badge-1st">1st</span><span class="mc-date">12/4/2023</span></div>
+  <div class="mc-name">masaseo</div>
+  <div class="mc-group">🏕️ Pokémon GO in 高槻</div>
+  <div class="mc-bottom"><a href="https://campfire.onelink.me/eBr8?af_dp=campfire://&amp;af_force_deeplink=true&amp;deep_link_sub1=cj1jbHVicyZjPTA0YWFkNDJhLWFkODMtNDY2Zi04Mzc3LTQ1N2RiNjgwZTdjMyZpPXRydWU=" target="_blank" class="cf-link">Campfire</a></div>
+</div>
+<div class="member-card" data-search="ignis1975 pokémon go in 高槻 大阪府" style="margin-left:12px;border-left:3px solid #fbbf24;padding-left:10px;">
+  <div class="mc-top"><span class="badge-2nd">2nd</span><span class="mc-date">7/22/2025</span></div>
+  <div class="mc-name">IGNIS1975</div>
+  <div class="mc-group">🏕️ Pokémon GO in 高槻</div>
+  <div class="mc-bottom"><a href="https://campfire.onelink.me/eBr8?af_dp=campfire://&amp;af_force_deeplink=true&amp;deep_link_sub1=cj1jbHVicyZjPTA0YWFkNDJhLWFkODMtNDY2Zi04Mzc3LTQ1N2RiNjgwZTdjMyZpPXRydWU=" target="_blank" class="cf-link">Campfire</a></div>
+</div>
+<div class="member-card" data-search="ukemias ポケストップ増やす？ 大阪府">
+  <div class="mc-top"><span class="badge-1st">1st</span><span class="mc-date">6/5/2024</span></div>
+  <div class="mc-name">ukemias</div>
+  <div class="mc-group">🏕️ ポケストップ増やす？</div>
+  <div class="mc-bottom"><a href="https://campfire.onelink.me/eBr8?af_dp=campfire://&amp;af_force_deeplink=true&amp;deep_link_sub1=cj1jbHVicyZjPTRmZTVkOGYxLTNiMDgtNGZlYS05OWYwLTEwMjExOWQwZGNiZCZpPXRydWU=" target="_blank" class="cf-link">Campfire</a></div>
+</div>
+<div class="member-card" data-search="kita123123 ポケモン go 香里園 大阪府">
+  <div class="mc-top"><span class="badge-1st">1st</span><span class="mc-date">5/15/2025</span></div>
+  <div class="mc-name">kita123123</div>
+  <div class="mc-group">🏕️ ポケモン GO 香里園</div>
+  <div class="mc-bottom"><a href="https://campfire.onelink.me/eBr8?af_dp=campfire://&amp;af_force_deeplink=true&amp;deep_link_sub1=cj1jbHVicyZjPWQzNjFjN2FiLWY1ZjAtNGQ5My04ZjM3LTY2ODI3M2UxNzFlNiZpPXRydWU=" target="_blank" class="cf-link">Campfire</a></div>
+</div>
+<div class="member-card" data-search="mataashita39 ワクワクオリジナル 大阪府">
+  <div class="mc-top"><span class="badge-1st">1st</span><span class="mc-date">5/15/2024</span></div>
+  <div class="mc-name">MataAshita39</div>
+  <div class="mc-group">🏕️ ワクワクオリジナル</div>
+  <div class="mc-bottom"><a href="https://campfire.onelink.me/eBr8?af_dp=campfire://&amp;af_force_deeplink=true&amp;deep_link_sub1=cj1jbHVicyZjPWNjZGRlMmUzLTA3YjUtNDAzZS1iOTM5LTNhODUwYTE2YjY1NSZpPXRydWU=" target="_blank" class="cf-link">Campfire</a></div>
+</div>
+<div class="member-card" data-search="mikiya2015 夜活 pokémon go 大阪府">
+  <div class="mc-top"><span class="badge-1st">1st</span><span class="mc-date">12/4/2023</span></div>
+  <div class="mc-name">mikiya2015</div>
+  <div class="mc-group">🏕️ 夜活 Pokémon GO</div>
+  <div class="mc-bottom"><a href="https://campfire.onelink.me/eBr8?af_dp=campfire://&amp;af_force_deeplink=true&amp;deep_link_sub1=cj1jbHVicyZjPTVhMDQzYjYzLWU2MzAtNGUxZS05NzVjLTgwZWQ3NjBhZWQzMSZpPXRydWU=" target="_blank" class="cf-link">Campfire</a></div>
+</div>
+<div class="member-card" data-search="koonasu 枚方市ポケモン goグループ 大阪府">
+  <div class="mc-top"><span class="badge-1st">1st</span><span class="mc-date">5/15/2025</span></div>
+  <div class="mc-name">KooNasu</div>
+  <div class="mc-group">🏕️ 枚方市ポケモン GOグループ</div>
+  <div class="mc-bottom"><a href="https://campfire.onelink.me/eBr8?af_dp=campfire://&amp;af_force_deeplink=true&amp;deep_link_sub1=cj1jbHVicyZjPWE5YzgzYTVkLWEwM2QtNGZkMy1iYjA5LTk5ZDdiZDMxMDIyZSZpPXRydWU=" target="_blank" class="cf-link">Campfire</a></div>
+</div>
+</div></div>
+<div class="pref-section" id="28_兵庫県"><div class="pref-title">兵庫県 <span class="pref-count">(3名)</span></div>
+<div class="members-grid">
+<div class="member-card" data-search="fushigidawa pokémon go kakogawa 兵庫県">
+  <div class="mc-top"><span class="badge-1st">1st</span><span class="mc-date">5/14/2025</span></div>
+  <div class="mc-name">Fushigidawa</div>
+  <div class="mc-group">🏕️ Pokémon GO Kakogawa</div>
+  <div class="mc-bottom"><a href="https://campfire.onelink.me/eBr8?af_dp=campfire://&amp;af_force_deeplink=true&amp;deep_link_sub1=cj1jbHVicyZjPWI0MDIzN2FlLTc5YzgtNGFlMS05ZTY4LWExYjM3NDkzMTM4MSZpPXRydWU=" target="_blank" class="cf-link">Campfire</a></div>
+</div>
+<div class="member-card" data-search="mrshino3 pokémon go 三田 兵庫県">
+  <div class="mc-top"><span class="badge-1st">1st</span><span class="mc-date">7/22/2025</span></div>
+  <div class="mc-name">MrShino3</div>
+  <div class="mc-group">🏕️ Pokémon GO 三田</div>
+  <div class="mc-bottom"><a href="https://campfire.onelink.me/eBr8?af_dp=campfire://&amp;af_force_deeplink=true&amp;deep_link_sub1=cj1jbHVicyZjPTBhOTIzNDU3LWJiNmYtNDEwMi1iMTJlLTY1YmNmNTlkYmRlNCZpPXRydWU=" target="_blank" class="cf-link">Campfire</a></div>
+</div>
+<div class="member-card" data-search="norinoria24 夜活pokémon go kobe 兵庫県">
+  <div class="mc-top"><span class="badge-1st">1st</span><span class="mc-date">4/10/2024</span></div>
+  <div class="mc-name">NoriNoria24</div>
+  <div class="mc-group">🏕️ 夜活Pokémon GO KOBE</div>
+  <div class="mc-bottom"><a href="https://campfire.onelink.me/eBr8?af_dp=campfire://&amp;af_force_deeplink=true&amp;deep_link_sub1=cj1jbHVicyZjPTVhMDQzYjYzLWU2MzAtNGUxZS05NzVjLTgwZWQ3NjBhZWQzMSZpPXRydWU=" target="_blank" class="cf-link">Campfire</a></div>
+</div>
+</div></div>
+<div class="pref-section" id="29_奈良県"><div class="pref-title">奈良県 <span class="pref-count">(5名)</span></div>
+<div class="members-grid">
+<div class="member-card" data-search="umeko09 pokémon go nara カンフィー 奈良県">
+  <div class="mc-top"><span class="badge-1st">1st</span><span class="mc-date">6/16/2025</span></div>
+  <div class="mc-name">umeko09</div>
+  <div class="mc-group">🏕️ Pokémon GO NARA カンフィー</div>
+  <div class="mc-bottom"><a href="https://campfire.onelink.me/eBr8?af_dp=campfire://&amp;af_force_deeplink=true&amp;deep_link_sub1=cj1jbHVicyZjPTY0NGNlNGExLTAzZGEtNGM1Ny1hYzZhLTBkODcwYzU4ZmY5MCZpPXRydWU=" target="_blank" class="cf-link">Campfire</a></div>
+</div>
+<div class="member-card" data-search="nest21watti pokémon go 奈良 まほろば 奈良県">
+  <div class="mc-top"><span class="badge-1st">1st</span><span class="mc-date">12/4/2023</span></div>
+  <div class="mc-name">Nest21watti</div>
+  <div class="mc-group">🏕️ Pokémon GO 奈良 まほろば</div>
+  <div class="mc-bottom"><a href="https://campfire.onelink.me/eBr8?af_dp=campfire://&amp;af_force_deeplink=true&amp;deep_link_sub1=cj1jbHVicyZjPTE0Mzg4NmI4LTNlNTMtNGM1NC04YTU4LWJjNThlMGE4MmUyMSZpPXRydWU=" target="_blank" class="cf-link">Campfire</a></div>
+</div>
+<div class="member-card" data-search="fukudi000levi pokémon go 奈良 まほろば 奈良県" style="margin-left:12px;border-left:3px solid #fbbf24;padding-left:10px;">
+  <div class="mc-top"><span class="badge-2nd">2nd</span><span class="mc-date">5/7/2025</span></div>
+  <div class="mc-name">FukuDi000levi</div>
+  <div class="mc-group">🏕️ Pokémon GO 奈良 まほろば</div>
+  <div class="mc-bottom"><a href="https://campfire.onelink.me/eBr8?af_dp=campfire://&amp;af_force_deeplink=true&amp;deep_link_sub1=cj1jbHVicyZjPTE0Mzg4NmI4LTNlNTMtNGM1NC04YTU4LWJjNThlMGE4MmUyMSZpPXRydWU=" target="_blank" class="cf-link">Campfire</a></div>
+</div>
+<div class="member-card" data-search="bontarochi pokémon go 奈良 やまと 奈良県">
+  <div class="mc-top"><span class="badge-1st">1st</span><span class="mc-date">6/19/2024</span></div>
+  <div class="mc-name">bontarochi</div>
+  <div class="mc-group">🏕️ Pokémon GO 奈良 やまと</div>
+  <div class="mc-bottom"><a href="https://campfire.onelink.me/eBr8?af_dp=campfire://&amp;af_force_deeplink=true&amp;deep_link_sub1=cj1jbHVicyZjPTE0Mzg4NmI4LTNlNTMtNGM1NC04YTU4LWJjNThlMGE4MmUyMSZpPXRydWU=" target="_blank" class="cf-link">Campfire</a></div>
+</div>
+<div class="member-card" data-search="kotarou1sai pokémon go 奈良 やまと 奈良県" style="margin-left:12px;border-left:3px solid #fbbf24;padding-left:10px;">
+  <div class="mc-top"><span class="badge-2nd">2nd</span><span class="mc-date">9/26/2025</span></div>
+  <div class="mc-name">kotarou1sai</div>
+  <div class="mc-group">🏕️ Pokémon GO 奈良 やまと</div>
+  <div class="mc-bottom"><a href="https://campfire.onelink.me/eBr8?af_dp=campfire://&amp;af_force_deeplink=true&amp;deep_link_sub1=cj1jbHVicyZjPTliMDYzM2E2LTcyNGEtNDYxYS1iYjQwLTkyOTM0YjU4NzE1YiZpPXRydWU=" target="_blank" class="cf-link">Campfire</a></div>
+</div>
+</div></div>
+<div class="pref-section" id="30_和歌山県"><div class="pref-title">和歌山県 <span class="pref-count">(1名)</span></div>
+<div class="members-grid">
+<div class="member-card" data-search="6yukimura pokémon go friends wakayama 和歌山県">
+  <div class="mc-top"><span class="badge-1st">1st</span><span class="mc-date">4/9/2024</span></div>
+  <div class="mc-name">6YUKIMURA</div>
+  <div class="mc-group">🏕️ Pokémon GO Friends WAKAYAMA</div>
+  <div class="mc-bottom"><a href="https://campfire.onelink.me/eBr8?af_dp=campfire://&amp;af_force_deeplink=true&amp;deep_link_sub1=cj1jbHVicyZjPWMyNDQ4NWJkLWZhNmEtNGQ5OS04Njk2LWViZjY2MjIxNjRlZSZpPXRydWU=" target="_blank" class="cf-link">Campfire</a></div>
+</div>
+</div></div>
+</div>
+<div class="region-section"><div class="region-title">🌊 中国・四国 <span class="badge">11名</span></div>
+<div class="pref-section" id="34_広島県"><div class="pref-title">広島県 <span class="pref-count">(2名)</span></div>
+<div class="members-grid">
+<div class="member-card" data-search="copy1107 ポケモン go 広島 広島県">
+  <div class="mc-top"><span class="badge-1st">1st</span><span class="mc-date">5/7/2025</span></div>
+  <div class="mc-name">copy1107</div>
+  <div class="mc-group">🏕️ ポケモン GO 広島</div>
+  <div class="mc-bottom"><a href="https://campfire.onelink.me/eBr8?af_dp=campfire://&amp;af_force_deeplink=true&amp;deep_link_sub1=cj1jbHVicyZjPTU5ZDljY2Q1LTQ2YzQtNDFiNy05OGQ1LWE0NTVmYjhjNTQ2ZCZpPXRydWU=" target="_blank" class="cf-link">Campfire</a></div>
+</div>
+<div class="member-card" data-search="1480speed ポケモン go 広島 広島県" style="margin-left:12px;border-left:3px solid #fbbf24;padding-left:10px;">
+  <div class="mc-top"><span class="badge-2nd">2nd</span><span class="mc-date">7/22/2025</span></div>
+  <div class="mc-name">1480speed</div>
+  <div class="mc-group">🏕️ ポケモン GO 広島</div>
+  <div class="mc-bottom"><a href="https://campfire.onelink.me/eBr8?af_dp=campfire://&amp;af_force_deeplink=true&amp;deep_link_sub1=cj1jbHVicyZjPTU5ZDljY2Q1LTQ2YzQtNDFiNy05OGQ1LWE0NTVmYjhjNTQ2ZCZpPXRydWU=" target="_blank" class="cf-link">Campfire</a></div>
+</div>
+</div></div>
+<div class="pref-section" id="35_山口県"><div class="pref-title">山口県 <span class="pref-count">(2名)</span></div>
+<div class="members-grid">
+<div class="member-card" data-search="suiroxy pokémon go 下関 山口県">
+  <div class="mc-top"><span class="badge-1st">1st</span><span class="mc-date">5/7/2025</span></div>
+  <div class="mc-name">Suiroxy</div>
+  <div class="mc-group">🏕️ Pokémon GO 下関</div>
+  <div class="mc-bottom"><a href="https://campfire.onelink.me/eBr8?af_dp=campfire://&amp;af_force_deeplink=true&amp;deep_link_sub1=cj1jbHVicyZjPWE3MzgzODIzLTQ2NjAtNDJkOS05MmNhLTRlN2JkMjk5MzdhNSZpPXRydWU=" target="_blank" class="cf-link">Campfire</a></div>
+</div>
+<div class="member-card" data-search="u296 pokémon さんぽ 周南・山口 山口県">
+  <div class="mc-top"><span class="badge-1st">1st</span><span class="mc-date">5/7/2025</span></div>
+  <div class="mc-name">u296</div>
+  <div class="mc-group">🏕️ Pokémon さんぽ 周南・山口</div>
+  <div class="mc-bottom"><a href="https://campfire.onelink.me/eBr8?af_dp=campfire://&amp;af_force_deeplink=true&amp;deep_link_sub1=cj1jbHVicyZjPTI3ZjRkNmM1LTk5OWItNGQyNy05ZGQzLWIyZjM0ZjVjZWY5YyZpPXRydWU=" target="_blank" class="cf-link">Campfire</a></div>
+</div>
+</div></div>
+<div class="pref-section" id="36_徳島県"><div class="pref-title">徳島県 <span class="pref-count">(5名)</span></div>
+<div class="members-grid">
+<div class="member-card" data-search="maruta804171 pokémon go club 小松島 徳島県">
+  <div class="mc-top"><span class="badge-1st">1st</span><span class="mc-date">9/26/2025</span></div>
+  <div class="mc-name">maruta804171</div>
+  <div class="mc-group">🏕️ Pokémon GO club 小松島</div>
+  <div class="mc-bottom"><a href="https://campfire.onelink.me/eBr8?af_dp=campfire://&amp;af_force_deeplink=true&amp;deep_link_sub1=cj1jbHVicyZjPWQ0ZDIyZGUzLTY2YTctNGQ2OS1iNmEwLTA0OWI1Njk0MzZkNyZpPXRydWU=" target="_blank" class="cf-link">Campfire</a></div>
+</div>
+<div class="member-card" data-search="ryo24s pokémon go in 石井ドーム 徳島県">
+  <div class="mc-top"><span class="badge-1st">1st</span><span class="mc-date">8/12/2025</span></div>
+  <div class="mc-name">RYO24s</div>
+  <div class="mc-group">🏕️ Pokémon GO in 石井ドーム</div>
+  <div class="mc-bottom"><a href="https://campfire.onelink.me/eBr8?af_dp=campfire://&amp;af_force_deeplink=true&amp;deep_link_sub1=cj1jbHVicyZjPTZlOGQ2YjZmLTAzNjctNDI0Yy04NTkyLTRlYzZiYjdiZDY3MyZpPXRydWU=" target="_blank" class="cf-link">Campfire</a></div>
+</div>
+<div class="member-card" data-search="banbe53 pokémon go in 石井ドーム 徳島県" style="margin-left:12px;border-left:3px solid #fbbf24;padding-left:10px;">
+  <div class="mc-top"><span class="badge-2nd">2nd</span><span class="mc-date">4/13/2026</span></div>
+  <div class="mc-name">banbe53</div>
+  <div class="mc-group">🏕️ Pokémon GO in 石井ドーム</div>
+  <div class="mc-bottom"><a href="https://campfire.onelink.me/eBr8?af_dp=campfire://&amp;af_force_deeplink=true&amp;deep_link_sub1=cj1jbHVicyZjPTZlOGQ2YjZmLTAzNjctNDI0Yy04NTkyLTRlYzZiYjdiZDY3MyZpPXRydWU=" target="_blank" class="cf-link">Campfire</a></div>
+</div>
+<div class="member-card" data-search="y121tomas ポケモン go tokushima 徳島県">
+  <div class="mc-top"><span class="badge-1st">1st</span><span class="mc-date">5/15/2025</span></div>
+  <div class="mc-name">y121tomas</div>
+  <div class="mc-group">🏕️ ポケモン GO Tokushima</div>
+  <div class="mc-bottom"><a href="https://campfire.onelink.me/eBr8?af_dp=campfire://&amp;af_force_deeplink=true&amp;deep_link_sub1=cj1jbHVicyZjPTJjYmEzYWI1LTQ3ODUtNDFiYS1iZTMxLWZmZDVlODRjZmNmOSZpPXRydWU=" target="_blank" class="cf-link">Campfire</a></div>
+</div>
+<div class="member-card" data-search="poyomity 新ポケモン go 阿南 徳島県">
+  <div class="mc-top"><span class="badge-1st">1st</span><span class="mc-date">9/26/2025</span></div>
+  <div class="mc-name">poyomity</div>
+  <div class="mc-group">🏕️ 新ポケモン GO 阿南</div>
+  <div class="mc-bottom"><a href="https://campfire.onelink.me/eBr8?af_dp=campfire://&amp;af_force_deeplink=true&amp;deep_link_sub1=cj1jbHVicyZjPTJjYmEzYWI1LTQ3ODUtNDFiYS1iZTMxLWZmZDVlODRjZmNmOSZpPXRydWU=" target="_blank" class="cf-link">Campfire</a></div>
+</div>
+</div></div>
+<div class="pref-section" id="37_香川県"><div class="pref-title">香川県 <span class="pref-count">(2名)</span></div>
+<div class="members-grid">
+<div class="member-card" data-search="yosuke11150808 pokémon go 高松 city 香川県">
+  <div class="mc-top"><span class="badge-1st">1st</span><span class="mc-date">5/15/2025</span></div>
+  <div class="mc-name">Yosuke11150808</div>
+  <div class="mc-group">🏕️ Pokémon GO 高松 CITY</div>
+  <div class="mc-bottom"><a href="https://campfire.onelink.me/eBr8?af_dp=campfire://&amp;af_force_deeplink=true&amp;deep_link_sub1=cj1jbHVicyZjPTFhMGVjNGJlLWZiMGMtNGIwNS1hMWU2LTQ0YWJjN2I1NmQ1MyZpPXRydWU=" target="_blank" class="cf-link">Campfire</a></div>
+</div>
+<div class="member-card" data-search="yappari00 pokémon go 高松 city 香川県" style="margin-left:12px;border-left:3px solid #fbbf24;padding-left:10px;">
+  <div class="mc-top"><span class="badge-2nd">2nd</span><span class="mc-date">7/22/2025</span></div>
+  <div class="mc-name">yappari00</div>
+  <div class="mc-group">🏕️ Pokémon GO 高松 CITY</div>
+  <div class="mc-bottom"><a href="https://campfire.onelink.me/eBr8?af_dp=campfire://&amp;af_force_deeplink=true&amp;deep_link_sub1=cj1jbHVicyZjPTFhMGVjNGJlLWZiMGMtNGIwNS1hMWU2LTQ0YWJjN2I1NmQ1MyZpPXRydWU=" target="_blank" class="cf-link">Campfire</a></div>
+</div>
+</div></div>
+</div>
+<div class="region-section"><div class="region-title">🌺 九州・沖縄 <span class="badge">23名</span></div>
+<div class="pref-section" id="40_福岡県"><div class="pref-title">福岡県 <span class="pref-count">(6名)</span></div>
+<div class="members-grid">
+<div class="member-card" data-search="chamimaru1 pokémon go kurosaki 福岡県">
+  <div class="mc-top"><span class="badge-1st">1st</span><span class="mc-date">5/15/2025</span></div>
+  <div class="mc-name">chamimaru1</div>
+  <div class="mc-group">🏕️ Pokémon GO Kurosaki</div>
+  <div class="mc-bottom"><a href="https://campfire.onelink.me/eBr8?af_dp=campfire://&amp;af_force_deeplink=true&amp;deep_link_sub1=cj1jbHVicyZjPWUzMjI2Zjc2LTYyYzAtNDRiMy1hMjQ4LTAwMzJmMzNkY2RlOSZpPXRydWU=" target="_blank" class="cf-link">Campfire</a></div>
+</div>
+<div class="member-card" data-search="nena01414 pokémon go kurosaki 福岡県" style="margin-left:12px;border-left:3px solid #fbbf24;padding-left:10px;">
+  <div class="mc-top"><span class="badge-2nd">2nd</span><span class="mc-date">5/15/2025</span></div>
+  <div class="mc-name">nena01414</div>
+  <div class="mc-group">🏕️ Pokémon GO Kurosaki</div>
+  <div class="mc-bottom"><a href="https://campfire.onelink.me/eBr8?af_dp=campfire://&amp;af_force_deeplink=true&amp;deep_link_sub1=cj1jbHVicyZjPWUzMjI2Zjc2LTYyYzAtNDRiMy1hMjQ4LTAwMzJmMzNkY2RlOSZpPXRydWU=" target="_blank" class="cf-link">Campfire</a></div>
+</div>
+<div class="member-card" data-search="fittyan pokémon go 福岡小倉支部 kokura 福岡県">
+  <div class="mc-top"><span class="badge-1st">1st</span><span class="mc-date">5/14/2025</span></div>
+  <div class="mc-name">Fittyan</div>
+  <div class="mc-group">🏕️ Pokémon GO 福岡小倉支部 Kokura</div>
+  <div class="mc-bottom"><a href="https://campfire.onelink.me/eBr8?af_dp=campfire://&amp;af_force_deeplink=true&amp;deep_link_sub1=cj1jbHVicyZjPWJiMzU4MDBiLTVkZTYtNGMyMi1iYjdjLTI1NTcyZjRlYzg5ZSZpPXRydWU=" target="_blank" class="cf-link">Campfire</a></div>
+</div>
+<div class="member-card" data-search="kemoco1 エンジョイ勢時々ガチる（佐賀〜福岡） 福岡県">
+  <div class="mc-top"><span class="badge-1st">1st</span><span class="mc-date">7/22/2025</span></div>
+  <div class="mc-name">kemoco1</div>
+  <div class="mc-group">🏕️ エンジョイ勢時々ガチる（佐賀〜福岡）</div>
+  <div class="mc-bottom"><a href="https://campfire.onelink.me/eBr8?af_dp=campfire://&amp;af_force_deeplink=true&amp;deep_link_sub1=cj1jbHVicyZjPThhMjczMTA0LTA3ZjYtNDJjOS1iMDFiLTg2MTcwZTQyOTJmMiZpPXRydWU=" target="_blank" class="cf-link">Campfire</a></div>
+</div>
+<div class="member-card" data-search="dylankokoro 福岡go団fukuokagodan 福岡県">
+  <div class="mc-top"><span class="badge-1st">1st</span><span class="mc-date">9/15/2023</span></div>
+  <div class="mc-name">DylanKokoro</div>
+  <div class="mc-group">🏕️ 福岡GO団FukuokaGODan</div>
+  <div class="mc-bottom"><a href="https://campfire.onelink.me/eBr8?af_dp=campfire://&amp;af_force_deeplink=true&amp;deep_link_sub1=cj1jbHVicyZjPWEyY2M3MGI1LTE0ZTYtNDI1MC04Y2U5LWRmNzUxOWJlZWIzZCZpPXRydWU=" target="_blank" class="cf-link">Campfire</a></div>
+</div>
+<div class="member-card" data-search="heysuketabito 福岡go団fukuokagodan 福岡県" style="margin-left:12px;border-left:3px solid #fbbf24;padding-left:10px;">
+  <div class="mc-top"><span class="badge-2nd">2nd</span><span class="mc-date">5/20/2025</span></div>
+  <div class="mc-name">Heysuketabito</div>
+  <div class="mc-group">🏕️ 福岡GO団FukuokaGODan</div>
+  <div class="mc-bottom"><a href="https://campfire.onelink.me/eBr8?af_dp=campfire://&amp;af_force_deeplink=true&amp;deep_link_sub1=cj1jbHVicyZjPWEyY2M3MGI1LTE0ZTYtNDI1MC04Y2U5LWRmNzUxOWJlZWIzZCZpPXRydWU=" target="_blank" class="cf-link">Campfire</a></div>
+</div>
+</div></div>
+<div class="pref-section" id="41_佐賀県"><div class="pref-title">佐賀県 <span class="pref-count">(2名)</span></div>
+<div class="members-grid">
+<div class="member-card" data-search="nakanoazusa590 三神地区pokémon go倶楽部campfire支部 佐賀県">
+  <div class="mc-top"><span class="badge-1st">1st</span><span class="mc-date">8/12/2025</span></div>
+  <div class="mc-name">NakanoAzusa590</div>
+  <div class="mc-group">🏕️ 三神地区Pokémon GO倶楽部Campfire支部</div>
+  <div class="mc-bottom"><a href="https://campfire.onelink.me/eBr8?af_dp=campfire://&amp;af_force_deeplink=true&amp;deep_link_sub1=cj1jbHVicyZjPTZmZGNjMTA4LWI2NDktNGFlYi05OWQyLWRiMzgwOTg4ZDFmNCZpPXRydWU=" target="_blank" class="cf-link">Campfire</a></div>
+</div>
+<div class="member-card" data-search="upamanju 栄の町 佐賀県">
+  <div class="mc-top"><span class="badge-1st">1st</span><span class="mc-date">7/22/2025</span></div>
+  <div class="mc-name">UpaManju</div>
+  <div class="mc-group">🏕️ 栄の町</div>
+  <div class="mc-bottom"><a href="https://campfire.onelink.me/eBr8?af_dp=campfire://&amp;af_force_deeplink=true&amp;deep_link_sub1=cj1jbHVicyZjPTA2MzY2ZmNlLTliNTMtNDU1NC05YWY5LTBjZjE5MDYxMDhmOSZpPXRydWU=" target="_blank" class="cf-link">Campfire</a></div>
+</div>
+</div></div>
+<div class="pref-section" id="42_長崎県"><div class="pref-title">長崎県 <span class="pref-count">(1名)</span></div>
+<div class="members-grid">
+<div class="member-card" data-search="sonicborn ポケモン go 長崎市 長崎県">
+  <div class="mc-top"><span class="badge-1st">1st</span><span class="mc-date">2026/1/19</span></div>
+  <div class="mc-name">sonicborn</div>
+  <div class="mc-group">🏕️ ポケモン GO 長崎市</div>
+  <div class="mc-bottom"><a href="https://campfire.onelink.me/eBr8?af_dp=campfire://&amp;af_force_deeplink=true&amp;deep_link_sub1=cj1jbHVicyZjPTZmZWU5Y2YxLWI5OTQtNGJmNC05ZTVkLTk0ZWYwMmMxNTJhNiZpPXRydWU=" target="_blank" class="cf-link">Campfire</a></div>
+</div>
+</div></div>
+<div class="pref-section" id="43_熊本県"><div class="pref-title">熊本県 <span class="pref-count">(4名)</span></div>
+<div class="members-grid">
+<div class="member-card" data-search="asagaopakira ポケモン go【八代】 熊本県">
+  <div class="mc-top"><span class="badge-1st">1st</span><span class="mc-date">3/17/2026</span></div>
+  <div class="mc-name">asagaopakira</div>
+  <div class="mc-group">🏕️ ポケモン GO【八代】</div>
+  <div class="mc-bottom"><a href="https://campfire.onelink.me/eBr8?af_dp=campfire://&amp;af_force_deeplink=true&amp;deep_link_sub1=cj1jbHVicyZjPTIwZDU3NmViLTk2MDAtNGE3Yy1iMGYxLWE1MDM1NmZkYWFhMCZpPXRydWU=" target="_blank" class="cf-link">Campfire</a></div>
+</div>
+<div class="member-card" data-search="00toothy2thy 人吉下球磨 ポケモン go 熊本県">
+  <div class="mc-top"><span class="badge-1st">1st</span><span class="mc-date">4/9/2024</span></div>
+  <div class="mc-name">00toothy2thy</div>
+  <div class="mc-group">🏕️ 人吉下球磨 ポケモン GO</div>
+  <div class="mc-bottom"><a href="https://campfire.onelink.me/eBr8?af_dp=campfire://&amp;af_force_deeplink=true&amp;deep_link_sub1=cj1jbHVicyZjPTk2YzdmYmUzLTAzMjEtNGE0My1hMmNlLWQzMGJjZGZmODM1YyZpPXRydWU=" target="_blank" class="cf-link">Campfire</a></div>
+</div>
+<div class="member-card" data-search="tsumano26 熊本県民総合運動公園go 熊本県">
+  <div class="mc-top"><span class="badge-1st">1st</span><span class="mc-date">9/26/2025</span></div>
+  <div class="mc-name">tsumano26</div>
+  <div class="mc-group">🏕️ 熊本県民総合運動公園GO</div>
+  <div class="mc-bottom"><a href="https://campfire.onelink.me/eBr8?af_dp=campfire://&amp;af_force_deeplink=true&amp;deep_link_sub1=cj1jbHVicyZjPTRlMzQ0NzU2LTFlMTktNDk4Yy1iOThjLTU1ZjZjMTViMDU4MiZpPXRydWU=" target="_blank" class="cf-link">Campfire</a></div>
+</div>
+<div class="member-card" data-search="0527stk 肥後go 熊本県">
+  <div class="mc-top"><span class="badge-1st">1st</span><span class="mc-date">5/15/2025</span></div>
+  <div class="mc-name">0527STK</div>
+  <div class="mc-group">🏕️ 肥後GO</div>
+  <div class="mc-bottom"><a href="https://campfire.onelink.me/eBr8?af_dp=campfire://&amp;af_force_deeplink=true&amp;deep_link_sub1=cj1jbHVicyZjPTM5MzVmMzgxLWNhYmEtNGIyNy1hYWM4LTUwODg3M2U3YmM5OCZpPXRydWU=" target="_blank" class="cf-link">Campfire</a></div>
+</div>
+</div></div>
+<div class="pref-section" id="44_大分県"><div class="pref-title">大分県 <span class="pref-count">(2名)</span></div>
+<div class="members-grid">
+<div class="member-card" data-search="eddiecocoron pokémon go 大分中津 大分県">
+  <div class="mc-top"><span class="badge-1st">1st</span><span class="mc-date">5/7/2025</span></div>
+  <div class="mc-name">eddiecocoron</div>
+  <div class="mc-group">🏕️ Pokémon GO 大分中津</div>
+  <div class="mc-bottom"><a href="https://campfire.onelink.me/eBr8?af_dp=campfire://&amp;af_force_deeplink=true&amp;deep_link_sub1=cj1jbHVicyZjPWZkYWVlMjExLWJlZmYtNGEzZC04NDhkLTM3ODlmMWQ4YjQ0NyZpPXRydWU=" target="_blank" class="cf-link">Campfire</a></div>
+</div>
+<div class="member-card" data-search="kirua1213 ポケモン go 好きっちゃ大分 大分県">
+  <div class="mc-top"><span class="badge-1st">1st</span><span class="mc-date">4/13/2026</span></div>
+  <div class="mc-name">kirua1213</div>
+  <div class="mc-group">🏕️ ポケモン GO 好きっちゃ大分</div>
+  <div class="mc-bottom"><a href="https://campfire.onelink.me/eBr8?af_dp=campfire://&amp;af_force_deeplink=true&amp;deep_link_sub1=cj1jbHVicyZjPWE1Y2QxODI3LWQ4YzEtNDdiZi05Y2VkLTViODE3MzUzNDQ4OSZpPXRydWU=" target="_blank" class="cf-link">Campfire</a></div>
+</div>
+</div></div>
+<div class="pref-section" id="45_宮崎県"><div class="pref-title">宮崎県 <span class="pref-count">(2名)</span></div>
+<div class="members-grid">
+<div class="member-card" data-search="newsteposfm ポケモン go &quot;miyazaki&quot;宮崎 宮崎県">
+  <div class="mc-top"><span class="badge-1st">1st</span><span class="mc-date">2026/2/2</span></div>
+  <div class="mc-name">NewStepOSFM</div>
+  <div class="mc-group">🏕️ ポケモン GO &quot;Miyazaki&quot;宮崎</div>
+  <div class="mc-bottom"><a href="https://campfire.onelink.me/eBr8?af_dp=campfire://&amp;af_force_deeplink=true&amp;deep_link_sub1=cj1jbHVicyZjPWQ4MjhkMWRhLWZiYzMtNDBhOC05MzI5LTBmYWMzZjYzNDY1YiZpPXRydWU=" target="_blank" class="cf-link">Campfire</a></div>
+</div>
+<div class="member-card" data-search="karuma2568 宮崎市 ポケモン go 情報本部 宮崎県">
+  <div class="mc-top"><span class="badge-1st">1st</span><span class="mc-date">5/7/2025</span></div>
+  <div class="mc-name">karuma2568</div>
+  <div class="mc-group">🏕️ 宮崎市 ポケモン GO 情報本部</div>
+  <div class="mc-bottom"><a href="https://campfire.onelink.me/eBr8?af_dp=campfire://&amp;af_force_deeplink=true&amp;deep_link_sub1=cj1jbHVicyZjPTAyY2JlMzkxLTZhMDItNGMwMy05MGM4LWFlYWFkZmJiMzUyNCZpPXRydWU=" target="_blank" class="cf-link">Campfire</a></div>
+</div>
+</div></div>
+<div class="pref-section" id="46_鹿児島県"><div class="pref-title">鹿児島県 <span class="pref-count">(3名)</span></div>
+<div class="members-grid">
+<div class="member-card" data-search="hiroming1113 ポケモン go 指宿 鹿児島県">
+  <div class="mc-top"><span class="badge-1st">1st</span><span class="mc-date">9/26/2025</span></div>
+  <div class="mc-name">hiroming1113</div>
+  <div class="mc-group">🏕️ ポケモン GO 指宿</div>
+  <div class="mc-bottom"><a href="https://campfire.onelink.me/eBr8?af_dp=campfire://&amp;af_force_deeplink=true&amp;deep_link_sub1=cj1jbHVicyZjPWVkMGRiYzIxLThlOGUtNDZmMy1iZGFlLTgzZGM5NTMzODdlNCZpPXRydWU=" target="_blank" class="cf-link">Campfire</a></div>
+</div>
+<div class="member-card" data-search="ninja7hev ポケモン go 鹿児島 鹿児島県">
+  <div class="mc-top"><span class="badge-1st">1st</span><span class="mc-date">5/14/2025</span></div>
+  <div class="mc-name">Ninja7HEV</div>
+  <div class="mc-group">🏕️ ポケモン GO 鹿児島</div>
+  <div class="mc-bottom"><a href="https://campfire.onelink.me/eBr8?af_dp=campfire://&amp;af_force_deeplink=true&amp;deep_link_sub1=cj1jbHVicyZjPTFhOTJhMGIyLWVjNDYtNDBlOC05ZWUyLTA5ZjNhY2YyZTRhMCZpPXRydWU=" target="_blank" class="cf-link">Campfire</a></div>
+</div>
+<div class="member-card" data-search="ham113676 ポケモン go 鹿児島同好会 鹿児島県">
+  <div class="mc-top"><span class="badge-1st">1st</span><span class="mc-date">5/14/2025</span></div>
+  <div class="mc-name">Ham113676</div>
+  <div class="mc-group">🏕️ ポケモン GO 鹿児島同好会</div>
+  <div class="mc-bottom"><a href="https://campfire.onelink.me/eBr8?af_dp=campfire://&amp;af_force_deeplink=true&amp;deep_link_sub1=cj1jbHVicyZjPTc3YzRhOTU0LWI2MjYtNDBhNC05MWM4LTUzZmJiYmY4MTMwYiZpPXRydWU=" target="_blank" class="cf-link">Campfire</a></div>
+</div>
+</div></div>
+<div class="pref-section" id="47_沖縄県"><div class="pref-title">沖縄県 <span class="pref-count">(3名)</span></div>
+<div class="members-grid">
+<div class="member-card" data-search="uwetti haisai pokémon go 沖縄県">
+  <div class="mc-top"><span class="badge-1st">1st</span><span class="mc-date">5/14/2025</span></div>
+  <div class="mc-name">uwetti</div>
+  <div class="mc-group">🏕️ HAISAI Pokémon GO</div>
+  <div class="mc-bottom"><a href="https://campfire.onelink.me/eBr8?af_dp=campfire://&amp;af_force_deeplink=true&amp;deep_link_sub1=cj1jbHVicyZjPTNkMmQ2YjYxLTU1YmQtNDE0MS1hYzQwLTExMzIzYzU0YjFhMCZpPXRydWU=" target="_blank" class="cf-link">Campfire</a></div>
+</div>
+<div class="member-card" data-search="bf810 haisai pokémon go 沖縄県" style="margin-left:12px;border-left:3px solid #fbbf24;padding-left:10px;">
+  <div class="mc-top"><span class="badge-2nd">2nd</span><span class="mc-date">2025/12/22</span></div>
+  <div class="mc-name">BF810</div>
+  <div class="mc-group">🏕️ HAISAI Pokémon GO</div>
+  <div class="mc-bottom"><a href="https://campfire.onelink.me/eBr8?af_dp=campfire://&amp;af_force_deeplink=true&amp;deep_link_sub1=cj1jbHVicyZjPTNkMmQ2YjYxLTU1YmQtNDE0MS1hYzQwLTExMzIzYzU0YjFhMCZpPXRydWU=" target="_blank" class="cf-link">Campfire</a></div>
+</div>
+<div class="member-card" data-search="alchemist02 美ら島 沖縄県">
+  <div class="mc-top"><span class="badge-1st">1st</span><span class="mc-date">7/22/2025</span></div>
+  <div class="mc-name">alchemist02</div>
+  <div class="mc-group">🏕️ 美ら島</div>
+  <div class="mc-bottom"><a href="https://campfire.onelink.me/eBr8?af_dp=campfire://&amp;af_force_deeplink=true&amp;deep_link_sub1=cj1jbHVicyZjPWMyNmUyNTk2LTFhMDktNDRmOS04ZTFlLTYxMWUwNmEyMjQ5YyZpPXRydWU=" target="_blank" class="cf-link">Campfire</a></div>
+</div>
+</div></div>
+</div>
+</main>
+</div>
+<script>
+function filterMembers(q){
+  const ql=q.toLowerCase();
+  document.querySelectorAll('.member-card').forEach(c=>{
+    const match=!ql||c.dataset.search.includes(ql);
+    c.classList.toggle('hidden',!match);
+  });
+}
+
+function setSyncStatus(message, type){
+  const el=document.getElementById('syncStatus');
+  if(!el) return;
+  el.textContent=message;
+  el.classList.remove('ok','err');
+  if(type) el.classList.add(type);
+}
+
+const DEFAULT_SHEET_URL = 'https://docs.google.com/spreadsheets/d/1BtPjOxNX4JhttKKJa_-qrIXdVmK5UsbAX-RcLmLTuwk/edit?gid=1086182934#gid=1086182934';
+const AUTO_REFRESH_MS = 10 * 60 * 1000;
+const AVATAR_MAP_API = 'http://localhost:8080/api/members/avatar-map';
+const REGION_CONFIG = [
+  { key: 'north', title: '❄️ 北海道・東北', prefs: ['01','02','03','04','05','06','07'] },
+  { key: 'kanto', title: '🏙️ 関東', prefs: ['08','09','10','11','12','13','14'] },
+  { key: 'chubu', title: '⛰️ 中部', prefs: ['15','16','17','18','19','20','21','22','23'] },
+  { key: 'kinki', title: '⛩️ 近畿', prefs: ['24','25','26','27','28','29','30'] },
+  { key: 'chushi', title: '🌊 中国・四国', prefs: ['31','32','33','34','35','36','37','38','39'] },
+  { key: 'kyushu', title: '🌺 九州・沖縄', prefs: ['40','41','42','43','44','45','46','47'] }
+];
+
+function normalizeSheetUrl(raw){
+  const input=(raw||'').trim();
+  return input || DEFAULT_SHEET_URL;
+}
+
+function parseSheetInfo(sheetUrl){
+  const m = sheetUrl.match(/\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/);
+  if(!m) throw new Error('GoogleスプレッドシートURLを認識できません');
+  const sheetId=m[1];
+  const gidMatch = sheetUrl.match(/[?#&]gid=(\d+)/);
+  const gid=gidMatch?gidMatch[1]:'0';
+  return {sheetId,gid};
+}
+
+function toCsvExportUrl(sheetUrl){
+  const {sheetId,gid}=parseSheetInfo(sheetUrl);
+  return `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv&gid=${gid}`;
+}
+
+function loadSheetRowsViaJsonp(sheetUrl){
+  const {sheetId,gid}=parseSheetInfo(sheetUrl);
+  return new Promise((resolve,reject)=>{
+    const callbackName=`__caSheetCb_${Date.now()}_${Math.floor(Math.random()*10000)}`;
+    const cleanup=()=>{
+      try{ delete window[callbackName]; }catch(_){ window[callbackName]=undefined; }
+      if(script&&script.parentNode) script.parentNode.removeChild(script);
+      if(timer) clearTimeout(timer);
+    };
+    const timer=setTimeout(()=>{cleanup();reject(new Error('シート取得タイムアウト'));},15000);
+    window[callbackName]=(payload)=>{
+      try{
+        const table=payload&&payload.table;
+        if(!table||!Array.isArray(table.cols)||!Array.isArray(table.rows)){
+          throw new Error('シート形式が不正です');
+        }
+        const header=table.cols.map(c=>normalizeHeader(c&&c.label?c.label:c&&c.id?c.id:''));
+        const rows=table.rows.map(r=>(r.c||[]).map(cell=>cell&&cell.v!=null?String(cell.v):(cell&&cell.f?String(cell.f):'')));
+        cleanup();
+        resolve({header,rows});
+      }catch(err){
+        cleanup();
+        reject(err);
+      }
+    };
+    const script=document.createElement('script');
+    script.async=true;
+    script.onerror=()=>{cleanup();reject(new Error('Google Sheetsの読込に失敗しました'));};
+    script.src=`https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?gid=${gid}&tqx=out:json;responseHandler:${callbackName}&_ts=${Date.now()}`;
+    document.head.appendChild(script);
+  });
+}
+
+function escHtml(s){
+  return String(s||'')
+    .replace(/&/g,'&amp;')
+    .replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;')
+    .replace(/'/g,'&#39;');
+}
+
+function normalizeNameKey(s){
+  return String(s||'')
+    .toLowerCase()
+    .replace(/[\s\u3000_\-]+/g,'')
+    .replace(/[()\[\]{}<>「」『』【】.,!?:;"'`~@#$%^&*+=\\/|]+/g,'')
+    .trim();
+}
+
+async function fetchAvatarMapFromMembersCsv(){
+  const bust = AVATAR_MAP_API.includes('?') ? '&' : '?';
+  const res = await fetch(`${AVATAR_MAP_API}${bust}_ts=${Date.now()}`);
+  if(!res.ok){
+    let msg = `HTTP ${res.status}`;
+    try{
+      const d = await res.json();
+      if(d && d.error) msg = d.error;
+    }catch(_){ }
+    throw new Error(msg);
+  }
+  const d = await res.json();
+  return {
+    map: d.map || {},
+    avatarRowCount: d.avatar_row_count || 0,
+    sourcePath: d.source || 'members__APAC_*.csv'
+  };
+}
+
+function resolveAvatarForName(member, avatarData){
+  const keys = [
+    normalizeNameKey(member.discordUser),
+    normalizeNameKey(member.discordName),
+    normalizeNameKey(String(member.discordName||'').replace(/^@/,''))
+  ].filter(Boolean);
+  for(const key of keys){
+    if(avatarData.map[key]) return avatarData.map[key];
+  }
+  return '';
+}
+
+function parseCsv(text){
+  const rows=[];
+  let row=[];
+  let cell='';
+  let inQuote=false;
+  for(let i=0;i<text.length;i++){
+    const ch=text[i];
+    if(inQuote){
+      if(ch==='"'){
+        if(text[i+1]==='"'){ cell+='"'; i++; }
+        else inQuote=false;
+      }else cell+=ch;
+      continue;
+    }
+    if(ch==='"'){ inQuote=true; continue; }
+    if(ch===','){ row.push(cell); cell=''; continue; }
+    if(ch==='\n'){
+      row.push(cell); rows.push(row);
+      row=[]; cell='';
+      continue;
+    }
+    if(ch==='\r') continue;
+    cell+=ch;
+  }
+  if(cell.length||row.length){ row.push(cell); rows.push(row); }
+  return rows.filter(r=>r.some(c=>String(c||'').trim()!==''));
+}
+
+function normalizeHeader(s){ return String(s||'').trim().toLowerCase(); }
+
+function findHeaderIndex(header, names){
+  for(const n of names){
+    const i=header.indexOf(n);
+    if(i>=0) return i;
+  }
+  return -1;
+}
+
+function parseCoordinatePair(v1, v2){
+  const n1=parseFloat(String(v1||'').trim());
+  const n2=parseFloat(String(v2||'').trim());
+  if(Number.isNaN(n1)||Number.isNaN(n2)) return {lat:null,lng:null};
+  if(Math.abs(n1)<=90 && Math.abs(n2)<=180) return {lat:n1,lng:n2};
+  if(Math.abs(n2)<=90 && Math.abs(n1)<=180) return {lat:n2,lng:n1};
+  return {lat:null,lng:null};
+}
+
+function parseSheetCsv(csvText){
+  const rows=parseCsv(csvText);
+  if(rows.length<2) throw new Error('シートのデータ行がありません');
+  const header=rows[0].map(normalizeHeader);
+  const idx={
+    name: header.indexOf('pgo trainer name'),
+    discordName: findHeaderIndex(header, ['discord name']),
+    discordUser: findHeaderIndex(header, ['discord username','discord user name','discord id']),
+    second: header.indexOf('2nd ca'),
+    group: header.indexOf('campfire group name'),
+    url: header.indexOf('campfire url'),
+    city: header.indexOf('primary city'),
+    date: header.indexOf('ca join date'),
+    c1: header.indexOf('lng 緯度'),
+    c2: header.indexOf('lat 経度'),
+    avatar: header.indexOf('icon url')
+  };
+  if(idx.name<0||idx.group<0||idx.city<0) throw new Error('必要な列が見つかりません');
+  return rows.slice(1).map(r=>{
+    const city=String(r[idx.city]||'').trim();
+    const pm=city.match(/^(\d{2})_(.+)$/);
+    const coords=parseCoordinatePair(r[idx.c1], r[idx.c2]);
+    return {
+      name: String(r[idx.name]||'').trim(),
+      discordName: idx.discordName>=0 ? String(r[idx.discordName]||'').trim() : '',
+      discordUser: idx.discordUser>=0 ? String(r[idx.discordUser]||'').trim() : '',
+      second: String(r[idx.second]||'').trim(),
+      group: String(r[idx.group]||'').trim(),
+      url: String(r[idx.url]||'').trim(),
+      avatarUrl: idx.avatar>=0 ? String(r[idx.avatar]||'').trim() : '',
+      city,
+      prefCode: pm ? pm[1] : null,
+      prefName: pm ? pm[2] : city,
+      joinDate: String(r[idx.date]||'').trim(),
+      lat: coords.lat,
+      lng: coords.lng
+    };
+  }).filter(x=>x.name&&x.prefCode&&x.prefName);
+}
+
+function parseSheetRows(header, rows){
+  const idx={
+    name: header.indexOf('pgo trainer name'),
+    discordName: findHeaderIndex(header, ['discord name']),
+    discordUser: findHeaderIndex(header, ['discord username','discord user name','discord id']),
+    second: header.indexOf('2nd ca'),
+    group: header.indexOf('campfire group name'),
+    url: header.indexOf('campfire url'),
+    city: header.indexOf('primary city'),
+    date: header.indexOf('ca join date'),
+    c1: header.indexOf('lng 緯度'),
+    c2: header.indexOf('lat 経度'),
+    avatar: header.indexOf('icon url')
+  };
+  if(idx.name<0||idx.group<0||idx.city<0) throw new Error('必要な列が見つかりません');
+  return rows.map(r=>{
+    const city=String(r[idx.city]||'').trim();
+    const pm=city.match(/^(\d{2})_(.+)$/);
+    const coords=parseCoordinatePair(r[idx.c1], r[idx.c2]);
+    return {
+      name: String(r[idx.name]||'').trim(),
+      discordName: idx.discordName>=0 ? String(r[idx.discordName]||'').trim() : '',
+      discordUser: idx.discordUser>=0 ? String(r[idx.discordUser]||'').trim() : '',
+      second: String(r[idx.second]||'').trim(),
+      group: String(r[idx.group]||'').trim(),
+      url: String(r[idx.url]||'').trim(),
+      avatarUrl: idx.avatar>=0 ? String(r[idx.avatar]||'').trim() : '',
+      city,
+      prefCode: pm ? pm[1] : null,
+      prefName: pm ? pm[2] : city,
+      joinDate: String(r[idx.date]||'').trim(),
+      lat: coords.lat,
+      lng: coords.lng
+    };
+  }).filter(x=>x.name&&x.prefCode&&x.prefName);
+}
+
+function buildCardHtml(m){
+  const is2nd=!!m.second;
+  const badge=is2nd?'badge-2nd':'badge-1st';
+  const label=is2nd?'2nd':'1st';
+  const style=is2nd?' style="margin-left:12px;border-left:3px solid #fbbf24;padding-left:10px;"':'';
+  const dataSearch=`${m.name} ${m.group} ${m.prefName}`.toLowerCase();
+  const initials=escHtml((m.name||'?').slice(0,2).toUpperCase());
+  const avatarSrc = m.discordAvatarUrl || m.avatarUrl;
+  const avatar=avatarSrc?`<img src="${escHtml(avatarSrc)}" alt="${escHtml(m.name)}" loading="lazy" referrerpolicy="no-referrer">`:initials;
+  const link = m.url ? `<a href="${escHtml(m.url)}" target="_blank" class="cf-link">Campfire</a>` : '<span class="cf-link" style="opacity:.65">URLなし</span>';
+  const mapLink=(m.lat!=null&&m.lng!=null)?`<a href="#japanMap" class="cf-link">地図へ</a>`:'';
+  return `<div class="member-card" id="${escHtml(m.cardId||'')}" data-search="${escHtml(dataSearch)}"${style}><div class="mc-top"><span class="${badge}">${label}</span><span class="mc-date">${escHtml(m.joinDate)}</span></div><div class="mc-identity"><div class="mc-avatar">${avatar}</div><div class="mc-name">${escHtml(m.name)}</div></div><div class="mc-group">🏕️ ${escHtml(m.group)}</div><div class="mc-bottom">${link}${mapLink}</div></div>`;
+}
+
+function renderFromMembers(members){
+  latestMembers = members.slice();
+  members.forEach((m,idx)=>{ m.cardId=`m_${idx}_${m.prefCode}`; });
+  const byPref={};
+  members.forEach(m=>{
+    if(!byPref[m.prefCode]) byPref[m.prefCode]={name:m.prefName,members:[]};
+    byPref[m.prefCode].members.push(m);
+  });
+  Object.values(byPref).forEach(pref=>{
+    pref.members.sort((a,b)=>{
+      const g = String(a.group||'').localeCompare(String(b.group||''), 'ja');
+      if(g!==0) return g;
+      const ar=a.second?1:0;
+      const br=b.second?1:0;
+      if(ar!==br) return ar-br;
+      return String(a.name||'').localeCompare(String(b.name||''), 'ja');
+    });
+  });
+
+  const nextPrefData={};
+  Object.keys(prefData).forEach(code=>{
+    const currentName=prefData[code].name;
+    const entry=byPref[code];
+    const count=entry?entry.members.length:0;
+    nextPrefData[code]={name:entry?entry.name:currentName,count,has_ca:count>0};
+  });
+  prefData=nextPrefData;
+
+  const sidebar=document.getElementById('sidebar');
+  const main=document.getElementById('mainContent');
+  if(!sidebar||!main) return;
+
+  const missingCodes=Object.keys(prefData).filter(c=>!prefData[c].has_ca).sort();
+  const total=members.length;
+  const covered=47-missingCodes.length;
+  const secondCount=members.filter(m=>m.second).length;
+  const stats=document.getElementById('statsLine');
+  if(stats) stats.innerHTML=`合計 <span>${total}</span>名 / カバー <span>${covered}/47</span>都道府県 / 2nd CA <span>${secondCount}</span>名`;
+
+  let sidebarHtml='';
+  let mainHtml='<div class="missing-section" id="missing">';
+  mainHtml+=`<div class="missing-title">🚨 CAがまだいない地域 (${missingCodes.length}県)</div><div class="missing-grid">`;
+  missingCodes.forEach(code=>{
+    const region=REGION_CONFIG.find(r=>r.prefs.includes(code));
+    mainHtml+=`<div class="missing-card"><span class="missing-pref">${escHtml(prefData[code].name)}</span><span class="missing-region">${escHtml(region?region.title.replace(/^\S+\s/,''):'')}</span></div>`;
+  });
+  mainHtml+='</div></div>';
+  mainHtml+='<div class="map-section"><div class="map-title">🗾 日本地図カバレッジマップ</div><div class="map-legend"><span class="leg-item"><span class="leg-dot leg-active"></span>CAがいる</span><span class="leg-item"><span class="leg-dot leg-empty"></span>CAがいない</span></div><div id="japanMap" style="width:100%;height:560px;border-radius:10px;overflow:hidden;background:#0a0e17;border:1px solid #253352;"></div></div>';
+
+  REGION_CONFIG.forEach(region=>{
+    const regionTotal=region.prefs.reduce((n,code)=>n+(prefData[code]?.count||0),0);
+    sidebarHtml+=`<div class="sidebar-region">${escHtml(region.title)} (${regionTotal})</div>`;
+    mainHtml+=`<div class="region-section"><div class="region-title">${escHtml(region.title)} <span class="badge">${regionTotal}名</span></div>`;
+    region.prefs.forEach(code=>{
+      const info=prefData[code];
+      const id=`${code}_${info.name}`;
+      if(info.count>0){
+        sidebarHtml+=`<a class="sidebar-pref" href="#${escHtml(id)}">${escHtml(info.name)}<span class="count">${info.count}</span></a>`;
+        const cards=(byPref[code]?.members||[]).map(buildCardHtml).join('');
+        mainHtml+=`<div class="pref-section" id="${escHtml(id)}"><div class="pref-title">${escHtml(info.name)} <span class="pref-count">(${info.count}名)</span></div><div class="members-grid">${cards}</div></div>`;
+      }else{
+        sidebarHtml+=`<a class="sidebar-pref missing" href="#missing">${escHtml(info.name)}<span class="count miss">0</span></a>`;
+      }
+    });
+    mainHtml+='</div>';
+  });
+
+  sidebar.innerHTML=sidebarHtml;
+  main.innerHTML=mainHtml;
+  initMap();
+}
+
+async function refreshFromSheet(){
+  const input=document.getElementById('caListUrl');
+  const sourceUrl=normalizeSheetUrl(input?input.value:'');
+  if(input) input.value=sourceUrl;
+  localStorage.setItem('caSheetUrl',sourceUrl);
+  setSyncStatus('シート更新中...','');
+  try{
+    let members=[];
+    try{
+      const dataset=await loadSheetRowsViaJsonp(sourceUrl);
+      members=parseSheetRows(dataset.header,dataset.rows);
+    }catch(_jsonpErr){
+      const csvUrl=toCsvExportUrl(sourceUrl);
+      const bust=csvUrl.includes('?')?'&':'?';
+      const res=await fetch(`${csvUrl}${bust}_ts=${Date.now()}`);
+      if(!res.ok) throw new Error(`HTTP ${res.status}`);
+      const csv=await res.text();
+      members=parseSheetCsv(csv);
+    }
+    let avatarData={map:{},avatarRowCount:0,sourcePath:'members__APAC_*.csv'};
+    let avatarLoadError='';
+    try{
+      avatarData = await fetchAvatarMapFromMembersCsv();
+    }catch(err){
+      avatarData = {map:{},avatarRowCount:0,sourcePath:'members__APAC_*.csv'};
+      avatarLoadError = String(err&&err.message?err.message:err);
+    }
+    let matchedAvatar = 0;
+    members.forEach(m=>{
+      const avatar = resolveAvatarForName(m, avatarData);
+      if(avatar){
+        m.discordAvatarUrl=avatar;
+        matchedAvatar += 1;
+      }
+    });
+    renderFromMembers(members);
+    const now=new Date();
+    localStorage.setItem('caSheetLastUpdatedAt',now.toISOString());
+    const base = `最終更新: ${now.toLocaleString('ja-JP')} / CSV: ${avatarData.sourcePath} / CSVアイコン行 ${avatarData.avatarRowCount}件 / マッチ ${matchedAvatar}件`;
+    if(avatarLoadError){
+      setSyncStatus(`${base} / CSV読込失敗: ${avatarLoadError}`,'err');
+    }else{
+      setSyncStatus(base,'ok');
+    }
+  }catch(err){
+    const msg=String(err&&err.message?err.message:err);
+    if(msg.includes('Failed to fetch')){
+      setSyncStatus('更新失敗: ブラウザ制限の可能性。http://localhost で開いて再試行してください','err');
+    }else{
+      setSyncStatus(`更新失敗: ${msg}`,'err');
+    }
+  }
+}
+
+window.addEventListener('DOMContentLoaded',()=>{
+  const input=document.getElementById('caListUrl');
+  const saved=localStorage.getItem('caSheetUrl')||DEFAULT_SHEET_URL;
+  if(input) input.value=saved;
+  const at=localStorage.getItem('caSheetLastUpdatedAt');
+  if(at){
+    const d=new Date(at);
+    const ts=Number.isNaN(d.getTime())?at:d.toLocaleString('ja-JP');
+    setSyncStatus(`最終更新: ${ts}`,'ok');
+  }
+  refreshFromSheet();
+  window.setInterval(refreshFromSheet, AUTO_REFRESH_MS);
+});
+
+let prefData = {"01": {"name": "北海道", "count": 13, "has_ca": true}, "02": {"name": "青森県", "count": 1, "has_ca": true}, "03": {"name": "岩手県", "count": 2, "has_ca": true}, "04": {"name": "宮城県", "count": 1, "has_ca": true}, "05": {"name": "秋田県", "count": 1, "has_ca": true}, "06": {"name": "山形県", "count": 0, "has_ca": false}, "07": {"name": "福島県", "count": 1, "has_ca": true}, "08": {"name": "茨城県", "count": 2, "has_ca": true}, "09": {"name": "栃木県", "count": 5, "has_ca": true}, "10": {"name": "群馬県", "count": 3, "has_ca": true}, "11": {"name": "埼玉県", "count": 6, "has_ca": true}, "12": {"name": "千葉県", "count": 9, "has_ca": true}, "13": {"name": "東京都", "count": 14, "has_ca": true}, "14": {"name": "神奈川県", "count": 8, "has_ca": true}, "15": {"name": "新潟県", "count": 8, "has_ca": true}, "16": {"name": "富山県", "count": 0, "has_ca": false}, "17": {"name": "石川県", "count": 0, "has_ca": false}, "18": {"name": "福井県", "count": 2, "has_ca": true}, "19": {"name": "山梨県", "count": 5, "has_ca": true}, "20": {"name": "長野県", "count": 9, "has_ca": true}, "21": {"name": "岐阜県", "count": 6, "has_ca": true}, "22": {"name": "静岡県", "count": 4, "has_ca": true}, "23": {"name": "愛知県", "count": 12, "has_ca": true}, "24": {"name": "三重県", "count": 2, "has_ca": true}, "25": {"name": "滋賀県", "count": 4, "has_ca": true}, "26": {"name": "京都府", "count": 6, "has_ca": true}, "27": {"name": "大阪府", "count": 10, "has_ca": true}, "28": {"name": "兵庫県", "count": 3, "has_ca": true}, "29": {"name": "奈良県", "count": 5, "has_ca": true}, "30": {"name": "和歌山県", "count": 1, "has_ca": true}, "31": {"name": "鳥取県", "count": 0, "has_ca": false}, "32": {"name": "島根県", "count": 0, "has_ca": false}, "33": {"name": "岡山県", "count": 0, "has_ca": false}, "34": {"name": "広島県", "count": 2, "has_ca": true}, "35": {"name": "山口県", "count": 2, "has_ca": true}, "36": {"name": "徳島県", "count": 5, "has_ca": true}, "37": {"name": "香川県", "count": 2, "has_ca": true}, "38": {"name": "愛媛県", "count": 0, "has_ca": false}, "39": {"name": "高知県", "count": 0, "has_ca": false}, "40": {"name": "福岡県", "count": 6, "has_ca": true}, "41": {"name": "佐賀県", "count": 2, "has_ca": true}, "42": {"name": "長崎県", "count": 1, "has_ca": true}, "43": {"name": "熊本県", "count": 4, "has_ca": true}, "44": {"name": "大分県", "count": 2, "has_ca": true}, "45": {"name": "宮崎県", "count": 2, "has_ca": true}, "46": {"name": "鹿児島県", "count": 3, "has_ca": true}, "47": {"name": "沖縄県", "count": 3, "has_ca": true}};
+let map = null;
+let latestMembers = [];
+
+function initMap(){
+  const mapEl=document.getElementById('japanMap');
+  if(!mapEl||!window.L) return;
+  if(map){ map.remove(); map=null; }
+  map = L.map('japanMap',{center:[36.5,137.5],zoom:5,zoomControl:true,attributionControl:false});
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{subdomains:'abcd',maxZoom:10}).addTo(map);
+  fetch('https://raw.githubusercontent.com/dataofjapan/land/master/japan.geojson')
+    .then(r=>r.json())
+    .then(geo=>{
+      L.geoJSON(geo,{
+        style:function(f){
+          let code=null;
+          for(const[c,info]of Object.entries(prefData)){if(info.name===f.properties.nam_ja||info.name===f.properties.name){code=c;break}}
+          if(!code){const numId=String(f.properties.id).padStart(2,'0');if(prefData[numId])code=numId}
+          const hasCa=code&&prefData[code]&&prefData[code].has_ca;
+          return{fillColor:hasCa?'#4f8cff':'#f87171',fillOpacity:hasCa?0.5:0.35,color:hasCa?'#93b4ff':'#fca5a5',weight:1.5};
+        },
+        onEachFeature:function(f,layer){
+          let code=null;
+          for(const[c,info]of Object.entries(prefData)){if(info.name===f.properties.nam_ja||info.name===f.properties.name){code=c;break}}
+          if(!code){const numId=String(f.properties.id).padStart(2,'0');if(prefData[numId])code=numId}
+          const info=code?prefData[code]:null;
+          const name=info?info.name:(f.properties.nam_ja||f.properties.name||'?');
+          const count=info?info.count:0;
+          const status=(info&&info.has_ca)?`<b style="color:#4f8cff">${count}名</b>`:'<b style="color:#f87171">CAなし</b>';
+          layer.bindPopup(`<b>${name}</b><br>${status}`);
+          layer.on('mouseover',function(){this.setStyle({weight:3,fillOpacity:0.7})});
+          layer.on('mouseout',function(){this.setStyle({weight:1.5,fillOpacity:(info&&info.has_ca)?0.5:0.35})});
+        }
+      }).addTo(map);
+      addMemberPins();
+    });
+}
+
+function addMemberPins(){
+  if(!map) return;
+  latestMembers
+    .filter(m=>m.lat!=null&&m.lng!=null)
+    .forEach(m=>{
+      const popupLink=m.url?`<a href="${escHtml(m.url)}" target="_blank" style="color:#2563eb;text-decoration:none">Campfireを開く</a>`:'リンクなし';
+      const popupHtml=`<div style="min-width:170px"><b>${escHtml(m.name)}</b><br><span style="color:#64748b">${escHtml(m.prefName)}</span><br><span style="color:#475569">${escHtml(m.group)}</span><br>${popupLink}</div>`;
+      const marker=L.circleMarker([m.lat,m.lng],{
+        radius:m.second?7:5,
+        color:m.second?'#fbbf24':'#93b4ff',
+        fillColor:m.second?'#f59e0b':'#4f8cff',
+        fillOpacity:0.95,
+        weight:1.5
+      }).addTo(map).bindPopup(popupHtml);
+      marker.on('click',()=>{
+        if(m.cardId){
+          const card=document.getElementById(m.cardId);
+          if(card){
+            card.scrollIntoView({behavior:'smooth',block:'center'});
+            card.style.borderColor='#fbbf24';
+            setTimeout(()=>{card.style.borderColor='';},1400);
+          }
+        }
+      });
+    });
+}
+
+initMap();
+</script>
+</body>
+</html>
