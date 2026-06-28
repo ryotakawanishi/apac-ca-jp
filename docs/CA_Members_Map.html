@@ -21,7 +21,7 @@ body.locked header,body.locked .layout{filter:blur(2px);pointer-events:none;user
 .login-btn{width:100%;padding:10px 12px;border:0;border-radius:8px;background:#4f8cff;color:#fff;font-size:13px;font-weight:700;cursor:pointer}
 .login-btn:hover{background:#3b7aed}
 .login-error{min-height:16px;margin-top:8px;font-size:12px;color:#fb7185}
-header{background:var(--panel);border-bottom:1px solid var(--line);padding:16px 28px;display:flex;align-items:center;gap:14px;position:sticky;top:0;z-index:100}
+header{background:var(--panel);border-bottom:1px solid var(--line);padding:16px 28px;display:flex;align-items:center;gap:14px;position:static;z-index:100}
 header h1{font-size:16px;font-weight:800;color:#fff}
 header p{font-size:11px;color:var(--muted)}
 .header-right{margin-left:auto;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
@@ -45,16 +45,22 @@ header p{font-size:11px;color:var(--muted)}
 .sidebar-pref .count{font-size:10px;color:var(--accent);margin-left:4px}
 .sidebar-pref.missing{color:#64748b;opacity:.7}
 .sidebar-pref .count.miss{color:var(--danger)}
-.main{flex:1;padding:24px 28px;overflow:hidden}
+.main{flex:1;padding:24px 28px;overflow:visible}
 .missing-section{background:linear-gradient(135deg,rgba(248,113,113,.08),rgba(251,191,36,.06));border:1px solid rgba(248,113,113,.25);border-radius:12px;padding:20px;margin-bottom:24px}
 .missing-title{font-size:14px;font-weight:800;color:var(--danger);margin-bottom:12px}
 .missing-grid{display:flex;flex-wrap:wrap;gap:8px}
 .missing-card{background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.25);border-radius:8px;padding:8px 12px;display:flex;flex-direction:column;align-items:center;gap:2px}
 .missing-pref{font-size:13px;font-weight:700;color:#fca5a5}
 .missing-region{font-size:10px;color:var(--muted)}
+.paused-section{background:linear-gradient(135deg,rgba(251,191,36,.08),rgba(148,163,184,.08));border:1px solid rgba(251,191,36,.26);border-radius:12px;padding:20px;margin-bottom:24px}
+.paused-title{font-size:14px;font-weight:800;color:#fbbf24;margin-bottom:12px}
+.paused-card{background:rgba(251,191,36,.12);border:1px solid rgba(251,191,36,.3);border-radius:8px;padding:8px 10px;display:flex;flex-direction:column;gap:2px}
+.paused-name{font-size:12px;font-weight:700;color:#fde68a}
+.paused-meta{font-size:10px;color:#94a3b8}
 .map-section{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:20px;margin-bottom:24px}
 .map-title{font-size:14px;font-weight:800;color:#fff;margin-bottom:10px}
 .map-legend{display:flex;gap:16px;margin-bottom:12px;font-size:11px;color:var(--muted)}
+.map-canvas{width:100%;height:560px;border-radius:10px;overflow:hidden;background:#0a0e17;border:1px solid #253352}
 .leg-item{display:flex;align-items:center;gap:6px}
 .leg-dot{width:14px;height:14px;border-radius:4px}
 .leg-active{background:rgba(108,140,255,.6);border:1px solid rgba(108,140,255,.8)}
@@ -82,7 +88,27 @@ header p{font-size:11px;color:var(--muted)}
 .cf-link{font-size:10px;color:var(--accent);text-decoration:none;padding:2px 8px;border:1px solid rgba(108,140,255,.3);border-radius:4px}
 .cf-link:hover{background:rgba(108,140,255,.1)}
 .leaflet-popup-content{font-size:12px;color:#333}
-@media(max-width:768px){.sidebar{display:none}.main{padding:16px}.members-grid{grid-template-columns:1fr}}
+@media(min-width:901px){header{position:sticky;top:0}}
+@media(min-width:901px){
+  header{transition:transform .24s ease,opacity .2s ease}
+  body.header-hidden header{transform:translateY(calc(-100% - 8px));opacity:0;pointer-events:none}
+  .sidebar{transition:top .24s ease,height .24s ease}
+  body.header-hidden .sidebar{top:0;height:100vh}
+}
+@media(max-width:900px){
+  header{padding:12px 14px;align-items:flex-start;flex-direction:column}
+  .header-right{margin-left:0;width:100%;gap:8px}
+  .search-box,.sync-url{width:100%}
+  .stats{width:100%;line-height:1.5}
+}
+@media(max-width:768px){
+  .sidebar{display:none}
+  .main{padding:12px}
+  .layout{display:block}
+  .members-grid{grid-template-columns:1fr}
+  .map-section{padding:12px}
+  .map-canvas{height:62vh;min-height:360px}
+}
 </style>
 </head>
 <body class="locked">
@@ -169,7 +195,7 @@ header p{font-size:11px;color:var(--muted)}
   <span class="leg-item"><span class="leg-dot leg-active"></span>CAがいる</span>
   <span class="leg-item"><span class="leg-dot leg-empty"></span>CAがいない</span>
 </div>
-<div id="japanMap" style="width:100%;height:560px;border-radius:10px;overflow:hidden;background:#0a0e17;border:1px solid #253352;"></div>
+<div id="japanMap" class="map-canvas"></div>
 </div>
 <div class="region-section"><div class="region-title">❄️ 北海道・東北 <span class="badge">19名</span></div>
 <div class="pref-section" id="01_北海道"><div class="pref-title">北海道 <span class="pref-count">(13名)</span></div>
@@ -1365,7 +1391,7 @@ header p{font-size:11px;color:var(--muted)}
 </main>
 </div>
 <script>
-const ACCESS_CODE = 'PGOCA2026';
+const ACCESS_CODE = 'CHANGE-ME-ACCESS-CODE';
 const ACCESS_KEY = 'ca_map_access_ok_v1';
 
 function sanitizePasscodeInput(input){
@@ -1406,10 +1432,38 @@ function initAccessLock(){
 initAccessLock();
 
 function filterMembers(q){
-  const ql=q.toLowerCase();
+  const rawTokens=String(q||'').toLowerCase().trim().split(/[\s\u3000]+/).filter(Boolean);
   document.querySelectorAll('.member-card').forEach(c=>{
-    const match=!ql||c.dataset.search.includes(ql);
+    const raw=(c.dataset.search||c.textContent||'').toLowerCase();
+    const norm=(c.dataset.searchNorm||normalizeSearchText(raw));
+    const match=!rawTokens.length||rawTokens.every(t=>raw.includes(t)||norm.includes(normalizeSearchText(t)));
     c.classList.toggle('hidden',!match);
+  });
+}
+
+function initHeaderAutoHide(){
+  if(!window.matchMedia('(min-width: 901px)').matches) return;
+  let lastY = window.scrollY || 0;
+  let ticking = false;
+  const update = ()=>{
+    const y = window.scrollY || 0;
+    if(y < 40){
+      document.body.classList.remove('header-hidden');
+    }else{
+      document.body.classList.toggle('header-hidden', y > 120 && y > lastY);
+    }
+    lastY = y;
+    ticking = false;
+  };
+  window.addEventListener('scroll', ()=>{
+    if(ticking) return;
+    ticking = true;
+    window.requestAnimationFrame(update);
+  }, {passive:true});
+  window.addEventListener('resize', ()=>{
+    if(!window.matchMedia('(min-width: 901px)').matches){
+      document.body.classList.remove('header-hidden');
+    }
   });
 }
 
@@ -1423,7 +1477,6 @@ function setSyncStatus(message, type){
 
 const DEFAULT_SHEET_URL = 'https://docs.google.com/spreadsheets/d/1BtPjOxNX4JhttKKJa_-qrIXdVmK5UsbAX-RcLmLTuwk/edit?gid=1086182934#gid=1086182934';
 const AUTO_REFRESH_MS = 10 * 60 * 1000;
-const AVATAR_MAP_API = 'http://localhost:8080/api/members/avatar-map';
 const REGION_CONFIG = [
   { key: 'north', title: '❄️ 北海道・東北', prefs: ['01','02','03','04','05','06','07'] },
   { key: 'kanto', title: '🏙️ 関東', prefs: ['08','09','10','11','12','13','14'] },
@@ -1432,6 +1485,20 @@ const REGION_CONFIG = [
   { key: 'chushi', title: '🌊 中国・四国', prefs: ['31','32','33','34','35','36','37','38','39'] },
   { key: 'kyushu', title: '🌺 九州・沖縄', prefs: ['40','41','42','43','44','45','46','47'] }
 ];
+
+function getRegionLabelByPrefCode(prefCode){
+  const region = REGION_CONFIG.find(r=>r.prefs.includes(String(prefCode||'')));
+  return region ? region.title.replace(/^\S+\s/,'') : '';
+}
+
+function normalizeSearchText(s){
+  return String(s||'')
+    .normalize('NFKC')
+    .toLowerCase()
+    .replace(/[\s\u3000]+/g,'')
+    .replace(/[()\[\]{}<>「」『』【】.,!?:;"'`~@#$%^&*+=\\/|]+/g,'')
+    .trim();
+}
 
 function normalizeSheetUrl(raw){
   const input=(raw||'').trim();
@@ -1494,45 +1561,6 @@ function escHtml(s){
     .replace(/'/g,'&#39;');
 }
 
-function normalizeNameKey(s){
-  return String(s||'')
-    .toLowerCase()
-    .replace(/[\s\u3000_\-]+/g,'')
-    .replace(/[()\[\]{}<>「」『』【】.,!?:;"'`~@#$%^&*+=\\/|]+/g,'')
-    .trim();
-}
-
-async function fetchAvatarMapFromMembersCsv(){
-  const bust = AVATAR_MAP_API.includes('?') ? '&' : '?';
-  const res = await fetch(`${AVATAR_MAP_API}${bust}_ts=${Date.now()}`);
-  if(!res.ok){
-    let msg = `HTTP ${res.status}`;
-    try{
-      const d = await res.json();
-      if(d && d.error) msg = d.error;
-    }catch(_){ }
-    throw new Error(msg);
-  }
-  const d = await res.json();
-  return {
-    map: d.map || {},
-    avatarRowCount: d.avatar_row_count || 0,
-    sourcePath: d.source || 'members__APAC_*.csv'
-  };
-}
-
-function resolveAvatarForName(member, avatarData){
-  const keys = [
-    normalizeNameKey(member.discordUser),
-    normalizeNameKey(member.discordName),
-    normalizeNameKey(String(member.discordName||'').replace(/^@/,''))
-  ].filter(Boolean);
-  for(const key of keys){
-    if(avatarData.map[key]) return avatarData.map[key];
-  }
-  return '';
-}
-
 function parseCsv(text){
   const rows=[];
   let row=[];
@@ -1587,15 +1615,16 @@ function parseSheetCsv(csvText){
   const idx={
     name: header.indexOf('pgo trainer name'),
     discordName: findHeaderIndex(header, ['discord name']),
-    discordUser: findHeaderIndex(header, ['discord username','discord user name','discord id']),
+    discordUser: findHeaderIndex(header, ['discord username','discord user name']),
     second: header.indexOf('2nd ca'),
     group: header.indexOf('campfire group name'),
     url: header.indexOf('campfire url'),
     city: header.indexOf('primary city'),
     date: header.indexOf('ca join date'),
-    c1: header.indexOf('lng 緯度'),
-    c2: header.indexOf('lat 経度'),
-    avatar: header.indexOf('icon url')
+    c1: findHeaderIndex(header, ['lng 緯度','lat 緯度','緯度','latitude','lat']),
+    c2: findHeaderIndex(header, ['lat 経度','lng 経度','経度','longitude','lng']),
+    avatar: findHeaderIndex(header, ['discord icon','icon url','avatar url']),
+    status: findHeaderIndex(header, ['status','ステータス','状態'])
   };
   if(idx.name<0||idx.group<0||idx.city<0) throw new Error('必要な列が見つかりません');
   return rows.slice(1).map(r=>{
@@ -1610,6 +1639,7 @@ function parseSheetCsv(csvText){
       group: String(r[idx.group]||'').trim(),
       url: String(r[idx.url]||'').trim(),
       avatarUrl: idx.avatar>=0 ? String(r[idx.avatar]||'').trim() : '',
+      status: idx.status>=0 ? String(r[idx.status]||'').trim() : '',
       city,
       prefCode: pm ? pm[1] : null,
       prefName: pm ? pm[2] : city,
@@ -1624,15 +1654,16 @@ function parseSheetRows(header, rows){
   const idx={
     name: header.indexOf('pgo trainer name'),
     discordName: findHeaderIndex(header, ['discord name']),
-    discordUser: findHeaderIndex(header, ['discord username','discord user name','discord id']),
+    discordUser: findHeaderIndex(header, ['discord username','discord user name']),
     second: header.indexOf('2nd ca'),
     group: header.indexOf('campfire group name'),
     url: header.indexOf('campfire url'),
     city: header.indexOf('primary city'),
     date: header.indexOf('ca join date'),
-    c1: header.indexOf('lng 緯度'),
-    c2: header.indexOf('lat 経度'),
-    avatar: header.indexOf('icon url')
+    c1: findHeaderIndex(header, ['lng 緯度','lat 緯度','緯度','latitude','lat']),
+    c2: findHeaderIndex(header, ['lat 経度','lng 経度','経度','longitude','lng']),
+    avatar: findHeaderIndex(header, ['discord icon','icon url','avatar url']),
+    status: findHeaderIndex(header, ['status','ステータス','状態'])
   };
   if(idx.name<0||idx.group<0||idx.city<0) throw new Error('必要な列が見つかりません');
   return rows.map(r=>{
@@ -1647,6 +1678,7 @@ function parseSheetRows(header, rows){
       group: String(r[idx.group]||'').trim(),
       url: String(r[idx.url]||'').trim(),
       avatarUrl: idx.avatar>=0 ? String(r[idx.avatar]||'').trim() : '',
+      status: idx.status>=0 ? String(r[idx.status]||'').trim() : '',
       city,
       prefCode: pm ? pm[1] : null,
       prefName: pm ? pm[2] : city,
@@ -1662,20 +1694,31 @@ function buildCardHtml(m){
   const badge=is2nd?'badge-2nd':'badge-1st';
   const label=is2nd?'2nd':'1st';
   const style=is2nd?' style="margin-left:12px;border-left:3px solid #fbbf24;padding-left:10px;"':'';
-  const dataSearch=`${m.name} ${m.group} ${m.prefName}`.toLowerCase();
+  const regionLabel=getRegionLabelByPrefCode(m.prefCode);
+  const dataSearch=`${m.name} ${m.group} ${m.prefName} ${regionLabel} ${m.city}`.toLowerCase();
+  const dataSearchNorm=normalizeSearchText(dataSearch);
   const initials=escHtml((m.name||'?').slice(0,2).toUpperCase());
-  const avatarSrc = m.discordAvatarUrl || m.avatarUrl;
+  const avatarSrc = m.avatarUrl;
   const avatar=avatarSrc?`<img src="${escHtml(avatarSrc)}" alt="${escHtml(m.name)}" loading="lazy" referrerpolicy="no-referrer">`:initials;
   const link = m.url ? `<a href="${escHtml(m.url)}" target="_blank" class="cf-link">Campfire</a>` : '<span class="cf-link" style="opacity:.65">URLなし</span>';
   const mapLink=(m.lat!=null&&m.lng!=null)?`<a href="#japanMap" class="cf-link">地図へ</a>`:'';
-  return `<div class="member-card" id="${escHtml(m.cardId||'')}" data-search="${escHtml(dataSearch)}"${style}><div class="mc-top"><span class="${badge}">${label}</span><span class="mc-date">${escHtml(m.joinDate)}</span></div><div class="mc-identity"><div class="mc-avatar">${avatar}</div><div class="mc-name">${escHtml(m.name)}</div></div><div class="mc-group">🏕️ ${escHtml(m.group)}</div><div class="mc-bottom">${link}${mapLink}</div></div>`;
+  return `<div class="member-card" id="${escHtml(m.cardId||'')}" data-search="${escHtml(dataSearch)}" data-search-norm="${escHtml(dataSearchNorm)}"${style}><div class="mc-top"><span class="${badge}">${label}</span><span class="mc-date">${escHtml(m.joinDate)}</span></div><div class="mc-identity"><div class="mc-avatar">${avatar}</div><div class="mc-name">${escHtml(m.name)}</div></div><div class="mc-group">🏕️ ${escHtml(m.group)}</div><div class="mc-bottom">${link}${mapLink}</div></div>`;
 }
 
 function renderFromMembers(members){
-  latestMembers = members.slice();
-  members.forEach((m,idx)=>{ m.cardId=`m_${idx}_${m.prefCode}`; });
-  const byPref={};
+  const pausedMembers=[];
+  const activeMembers=[];
   members.forEach(m=>{
+    const s=String(m.status||'').toLowerCase().replace(/\s+/g,' ').trim();
+    const isPaused = s.includes('inactive') || s.includes('🏝️ inactive') || s.includes('休止');
+    if(isPaused) pausedMembers.push(m);
+    else activeMembers.push(m);
+  });
+
+  latestMembers = activeMembers.slice();
+  activeMembers.forEach((m,idx)=>{ m.cardId=`m_${idx}_${m.prefCode}`; });
+  const byPref={};
+  activeMembers.forEach(m=>{
     if(!byPref[m.prefCode]) byPref[m.prefCode]={name:m.prefName,members:[]};
     byPref[m.prefCode].members.push(m);
   });
@@ -1704,11 +1747,11 @@ function renderFromMembers(members){
   if(!sidebar||!main) return;
 
   const missingCodes=Object.keys(prefData).filter(c=>!prefData[c].has_ca).sort();
-  const total=members.length;
+  const total=activeMembers.length;
   const covered=47-missingCodes.length;
-  const secondCount=members.filter(m=>m.second).length;
+  const secondCount=activeMembers.filter(m=>m.second).length;
   const stats=document.getElementById('statsLine');
-  if(stats) stats.innerHTML=`合計 <span>${total}</span>名 / カバー <span>${covered}/47</span>都道府県 / 2nd CA <span>${secondCount}</span>名`;
+  if(stats) stats.innerHTML=`合計 <span>${total}</span>名 / カバー <span>${covered}/47</span>都道府県 / 2nd CA <span>${secondCount}</span>名 / 休止 <span>${pausedMembers.length}</span>名`;
 
   let sidebarHtml='';
   let mainHtml='<div class="missing-section" id="missing">';
@@ -1718,7 +1761,14 @@ function renderFromMembers(members){
     mainHtml+=`<div class="missing-card"><span class="missing-pref">${escHtml(prefData[code].name)}</span><span class="missing-region">${escHtml(region?region.title.replace(/^\S+\s/,''):'')}</span></div>`;
   });
   mainHtml+='</div></div>';
-  mainHtml+='<div class="map-section"><div class="map-title">🗾 日本地図カバレッジマップ</div><div class="map-legend"><span class="leg-item"><span class="leg-dot leg-active"></span>CAがいる</span><span class="leg-item"><span class="leg-dot leg-empty"></span>CAがいない</span></div><div id="japanMap" style="width:100%;height:560px;border-radius:10px;overflow:hidden;background:#0a0e17;border:1px solid #253352;"></div></div>';
+  if(pausedMembers.length){
+    const pausedCards = pausedMembers
+      .sort((a,b)=>String(a.prefName||'').localeCompare(String(b.prefName||''),'ja'))
+      .map(m=>`<div class="paused-card"><div class="paused-name">${escHtml(m.name)}</div><div class="paused-meta">${escHtml(m.prefName)} / ${escHtml(m.group)} / ${escHtml(m.status||'🏝️ Inactive')}</div></div>`)
+      .join('');
+    mainHtml += `<div class="paused-section"><div class="paused-title">⏸ 休止中メンバー (${pausedMembers.length}名)</div><div class="missing-grid">${pausedCards}</div></div>`;
+  }
+  mainHtml+='<div class="map-section"><div class="map-title">🗾 日本地図カバレッジマップ</div><div class="map-legend"><span class="leg-item"><span class="leg-dot leg-active"></span>CAがいる</span><span class="leg-item"><span class="leg-dot leg-empty"></span>CAがいない</span></div><div id="japanMap" class="map-canvas"></div></div>';
 
   REGION_CONFIG.forEach(region=>{
     const regionTotal=region.prefs.reduce((n,code)=>n+(prefData[code]?.count||0),0);
@@ -1762,31 +1812,11 @@ async function refreshFromSheet(){
       const csv=await res.text();
       members=parseSheetCsv(csv);
     }
-    let avatarData={map:{},avatarRowCount:0,sourcePath:'members__APAC_*.csv'};
-    let avatarLoadError='';
-    try{
-      avatarData = await fetchAvatarMapFromMembersCsv();
-    }catch(err){
-      avatarData = {map:{},avatarRowCount:0,sourcePath:'members__APAC_*.csv'};
-      avatarLoadError = String(err&&err.message?err.message:err);
-    }
-    let matchedAvatar = 0;
-    members.forEach(m=>{
-      const avatar = resolveAvatarForName(m, avatarData);
-      if(avatar){
-        m.discordAvatarUrl=avatar;
-        matchedAvatar += 1;
-      }
-    });
     renderFromMembers(members);
     const now=new Date();
     localStorage.setItem('caSheetLastUpdatedAt',now.toISOString());
-    const base = `最終更新: ${now.toLocaleString('ja-JP')} / CSV: ${avatarData.sourcePath} / CSVアイコン行 ${avatarData.avatarRowCount}件 / マッチ ${matchedAvatar}件`;
-    if(avatarLoadError){
-      setSyncStatus(`${base} / CSV読込失敗: ${avatarLoadError}`,'err');
-    }else{
-      setSyncStatus(base,'ok');
-    }
+    const withAvatar = members.filter(m=>String(m.avatarUrl||'').trim()!=='').length;
+    setSyncStatus(`最終更新: ${now.toLocaleString('ja-JP')} / Discord Icon ${withAvatar}件`,'ok');
   }catch(err){
     const msg=String(err&&err.message?err.message:err);
     if(msg.includes('Failed to fetch')){
@@ -1807,8 +1837,15 @@ window.addEventListener('DOMContentLoaded',()=>{
     const ts=Number.isNaN(d.getTime())?at:d.toLocaleString('ja-JP');
     setSyncStatus(`最終更新: ${ts}`,'ok');
   }
+  initHeaderAutoHide();
   refreshFromSheet();
   window.setInterval(refreshFromSheet, AUTO_REFRESH_MS);
+});
+
+window.addEventListener('resize', ()=>{
+  if(map){
+    window.setTimeout(()=>map.invalidateSize(), 60);
+  }
 });
 
 let prefData = {"01": {"name": "北海道", "count": 13, "has_ca": true}, "02": {"name": "青森県", "count": 1, "has_ca": true}, "03": {"name": "岩手県", "count": 2, "has_ca": true}, "04": {"name": "宮城県", "count": 1, "has_ca": true}, "05": {"name": "秋田県", "count": 1, "has_ca": true}, "06": {"name": "山形県", "count": 0, "has_ca": false}, "07": {"name": "福島県", "count": 1, "has_ca": true}, "08": {"name": "茨城県", "count": 2, "has_ca": true}, "09": {"name": "栃木県", "count": 5, "has_ca": true}, "10": {"name": "群馬県", "count": 3, "has_ca": true}, "11": {"name": "埼玉県", "count": 6, "has_ca": true}, "12": {"name": "千葉県", "count": 9, "has_ca": true}, "13": {"name": "東京都", "count": 14, "has_ca": true}, "14": {"name": "神奈川県", "count": 8, "has_ca": true}, "15": {"name": "新潟県", "count": 8, "has_ca": true}, "16": {"name": "富山県", "count": 0, "has_ca": false}, "17": {"name": "石川県", "count": 0, "has_ca": false}, "18": {"name": "福井県", "count": 2, "has_ca": true}, "19": {"name": "山梨県", "count": 5, "has_ca": true}, "20": {"name": "長野県", "count": 9, "has_ca": true}, "21": {"name": "岐阜県", "count": 6, "has_ca": true}, "22": {"name": "静岡県", "count": 4, "has_ca": true}, "23": {"name": "愛知県", "count": 12, "has_ca": true}, "24": {"name": "三重県", "count": 2, "has_ca": true}, "25": {"name": "滋賀県", "count": 4, "has_ca": true}, "26": {"name": "京都府", "count": 6, "has_ca": true}, "27": {"name": "大阪府", "count": 10, "has_ca": true}, "28": {"name": "兵庫県", "count": 3, "has_ca": true}, "29": {"name": "奈良県", "count": 5, "has_ca": true}, "30": {"name": "和歌山県", "count": 1, "has_ca": true}, "31": {"name": "鳥取県", "count": 0, "has_ca": false}, "32": {"name": "島根県", "count": 0, "has_ca": false}, "33": {"name": "岡山県", "count": 0, "has_ca": false}, "34": {"name": "広島県", "count": 2, "has_ca": true}, "35": {"name": "山口県", "count": 2, "has_ca": true}, "36": {"name": "徳島県", "count": 5, "has_ca": true}, "37": {"name": "香川県", "count": 2, "has_ca": true}, "38": {"name": "愛媛県", "count": 0, "has_ca": false}, "39": {"name": "高知県", "count": 0, "has_ca": false}, "40": {"name": "福岡県", "count": 6, "has_ca": true}, "41": {"name": "佐賀県", "count": 2, "has_ca": true}, "42": {"name": "長崎県", "count": 1, "has_ca": true}, "43": {"name": "熊本県", "count": 4, "has_ca": true}, "44": {"name": "大分県", "count": 2, "has_ca": true}, "45": {"name": "宮崎県", "count": 2, "has_ca": true}, "46": {"name": "鹿児島県", "count": 3, "has_ca": true}, "47": {"name": "沖縄県", "count": 3, "has_ca": true}};
@@ -1819,7 +1856,8 @@ function initMap(){
   const mapEl=document.getElementById('japanMap');
   if(!mapEl||!window.L) return;
   if(map){ map.remove(); map=null; }
-  map = L.map('japanMap',{center:[36.5,137.5],zoom:5,zoomControl:true,attributionControl:false});
+  const mobile = window.matchMedia('(max-width: 768px)').matches;
+  map = L.map('japanMap',{center:[36.5,137.5],zoom:mobile?4:5,zoomControl:true,attributionControl:false});
   L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{subdomains:'abcd',maxZoom:10}).addTo(map);
   fetch('https://raw.githubusercontent.com/dataofjapan/land/master/japan.geojson')
     .then(r=>r.json())
@@ -1846,6 +1884,7 @@ function initMap(){
         }
       }).addTo(map);
       addMemberPins();
+      window.setTimeout(()=>map.invalidateSize(), 80);
     });
 }
 
