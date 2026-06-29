@@ -128,11 +128,11 @@ header p{font-size:11px;color:var(--muted)}
     <input id="caListUrl" class="sync-url" type="text" placeholder="Google Sheet URL (任意)">
     <button class="sync-btn" onclick="refreshFromSheet()">更新</button>
     <span id="syncStatus" class="sync-status">未更新</span>
-    <div id="statsLine" class="stats">合計 <span>177</span>名 / カバー <span>39/47</span>都道府県 / 2nd CA <span>32</span>名</div>
+    <div id="statsLine" class="stats">合計 <span>—</span>名 / カバー <span>—/47</span>都道府県 / 2nd CA <span>—</span>名 / グループ <span>—</span></div>
   </div>
 </header>
 <div class="layout">
-  <nav id="sidebar" class="sidebar"><div class="sidebar-region">❄️ 北海道・東北 (19)</div>
+  <nav id="sidebar" class="sidebar"><div class="sidebar-region">❄️ 北海道・東北 (19) / 17グループ</div>
 <a class="sidebar-pref" href="#01_北海道">北海道<span class="count">13</span></a>
 <a class="sidebar-pref" href="#02_青森県">青森県<span class="count">1</span></a>
 <a class="sidebar-pref" href="#03_岩手県">岩手県<span class="count">2</span></a>
@@ -140,7 +140,7 @@ header p{font-size:11px;color:var(--muted)}
 <a class="sidebar-pref" href="#05_秋田県">秋田県<span class="count">1</span></a>
 <a class="sidebar-pref missing" href="#missing">山形県<span class="count miss">0</span></a>
 <a class="sidebar-pref" href="#07_福島県">福島県<span class="count">1</span></a>
-<div class="sidebar-region">🏙️ 関東 (47)</div>
+<div class="sidebar-region">🏙️ 関東 (47) / 38グループ</div>
 <a class="sidebar-pref" href="#08_茨城県">茨城県<span class="count">2</span></a>
 <a class="sidebar-pref" href="#09_栃木県">栃木県<span class="count">5</span></a>
 <a class="sidebar-pref" href="#10_群馬県">群馬県<span class="count">3</span></a>
@@ -148,7 +148,7 @@ header p{font-size:11px;color:var(--muted)}
 <a class="sidebar-pref" href="#12_千葉県">千葉県<span class="count">9</span></a>
 <a class="sidebar-pref" href="#13_東京都">東京都<span class="count">14</span></a>
 <a class="sidebar-pref" href="#14_神奈川県">神奈川県<span class="count">8</span></a>
-<div class="sidebar-region">⛰️ 中部 (46)</div>
+<div class="sidebar-region">⛰️ 中部 (46) / 37グループ</div>
 <a class="sidebar-pref" href="#15_新潟県">新潟県<span class="count">8</span></a>
 <a class="sidebar-pref missing" href="#missing">富山県<span class="count miss">0</span></a>
 <a class="sidebar-pref missing" href="#missing">石川県<span class="count miss">0</span></a>
@@ -158,7 +158,7 @@ header p{font-size:11px;color:var(--muted)}
 <a class="sidebar-pref" href="#21_岐阜県">岐阜県<span class="count">6</span></a>
 <a class="sidebar-pref" href="#22_静岡県">静岡県<span class="count">4</span></a>
 <a class="sidebar-pref" href="#23_愛知県">愛知県<span class="count">12</span></a>
-<div class="sidebar-region">⛩️ 近畿 (31)</div>
+<div class="sidebar-region">⛩️ 近畿 (31) / 22グループ</div>
 <a class="sidebar-pref" href="#24_三重県">三重県<span class="count">2</span></a>
 <a class="sidebar-pref" href="#25_滋賀県">滋賀県<span class="count">4</span></a>
 <a class="sidebar-pref" href="#26_京都府">京都府<span class="count">6</span></a>
@@ -166,7 +166,7 @@ header p{font-size:11px;color:var(--muted)}
 <a class="sidebar-pref" href="#28_兵庫県">兵庫県<span class="count">3</span></a>
 <a class="sidebar-pref" href="#29_奈良県">奈良県<span class="count">5</span></a>
 <a class="sidebar-pref" href="#30_和歌山県">和歌山県<span class="count">1</span></a>
-<div class="sidebar-region">🌊 中国・四国 (11)</div>
+<div class="sidebar-region">🌊 中国・四国 (11) / 7グループ</div>
 <a class="sidebar-pref missing" href="#missing">鳥取県<span class="count miss">0</span></a>
 <a class="sidebar-pref missing" href="#missing">島根県<span class="count miss">0</span></a>
 <a class="sidebar-pref missing" href="#missing">岡山県<span class="count miss">0</span></a>
@@ -176,7 +176,7 @@ header p{font-size:11px;color:var(--muted)}
 <a class="sidebar-pref" href="#37_香川県">香川県<span class="count">2</span></a>
 <a class="sidebar-pref missing" href="#missing">愛媛県<span class="count miss">0</span></a>
 <a class="sidebar-pref missing" href="#missing">高知県<span class="count miss">0</span></a>
-<div class="sidebar-region">🌺 九州・沖縄 (23)</div>
+<div class="sidebar-region">🌺 九州・沖縄 (23) / 20グループ</div>
 <a class="sidebar-pref" href="#40_福岡県">福岡県<span class="count">6</span></a>
 <a class="sidebar-pref" href="#41_佐賀県">佐賀県<span class="count">2</span></a>
 <a class="sidebar-pref" href="#42_長崎県">長崎県<span class="count">1</span></a>
@@ -197,7 +197,7 @@ header p{font-size:11px;color:var(--muted)}
 </div>
 <div id="japanMap" class="map-canvas"></div>
 </div>
-<div class="region-section"><div class="region-title">❄️ 北海道・東北 <span class="badge">19名</span></div>
+<div class="region-section"><div class="region-title">❄️ 北海道・東北 <span class="badge">19名</span><span class="badge" style="background:#0f3460;color:#60a5fa;margin-left:4px;">17グループ</span></div>
 <div class="pref-section" id="01_北海道"><div class="pref-title">北海道 <span class="pref-count">(13名)</span></div>
 <div class="members-grid">
 <div class="member-card" data-search="hases10a pokémon go hokkaido (函館) 北海道">
@@ -331,7 +331,7 @@ header p{font-size:11px;color:var(--muted)}
 </div>
 </div></div>
 </div>
-<div class="region-section"><div class="region-title">🏙️ 関東 <span class="badge">47名</span></div>
+<div class="region-section"><div class="region-title">🏙️ 関東 <span class="badge">47名</span><span class="badge" style="background:#0f3460;color:#60a5fa;margin-left:4px;">38グループ</span></div>
 <div class="pref-section" id="08_茨城県"><div class="pref-title">茨城県 <span class="pref-count">(2名)</span></div>
 <div class="members-grid">
 <div class="member-card" data-search="nanabopipi0825 pokémon go koga 茨城県">
@@ -636,7 +636,7 @@ header p{font-size:11px;color:var(--muted)}
 </div>
 </div></div>
 </div>
-<div class="region-section"><div class="region-title">⛰️ 中部 <span class="badge">46名</span></div>
+<div class="region-section"><div class="region-title">⛰️ 中部 <span class="badge">46名</span><span class="badge" style="background:#0f3460;color:#60a5fa;margin-left:4px;">37グループ</span></div>
 <div class="pref-section" id="15_新潟県"><div class="pref-title">新潟県 <span class="pref-count">(8名)</span></div>
 <div class="members-grid">
 <div class="member-card" data-search="sekimendriver sadoisland walker 新潟県">
@@ -935,7 +935,7 @@ header p{font-size:11px;color:var(--muted)}
 </div>
 </div></div>
 </div>
-<div class="region-section"><div class="region-title">⛩️ 近畿 <span class="badge">31名</span></div>
+<div class="region-section"><div class="region-title">⛩️ 近畿 <span class="badge">31名</span><span class="badge" style="background:#0f3460;color:#60a5fa;margin-left:4px;">22グループ</span></div>
 <div class="pref-section" id="24_三重県"><div class="pref-title">三重県 <span class="pref-count">(2名)</span></div>
 <div class="members-grid">
 <div class="member-card" data-search="tamaoq84 ポケモン go 津 三重県">
@@ -1144,7 +1144,7 @@ header p{font-size:11px;color:var(--muted)}
 </div>
 </div></div>
 </div>
-<div class="region-section"><div class="region-title">🌊 中国・四国 <span class="badge">11名</span></div>
+<div class="region-section"><div class="region-title">🌊 中国・四国 <span class="badge">11名</span><span class="badge" style="background:#0f3460;color:#60a5fa;margin-left:4px;">7グループ</span></div>
 <div class="pref-section" id="34_広島県"><div class="pref-title">広島県 <span class="pref-count">(2名)</span></div>
 <div class="members-grid">
 <div class="member-card" data-search="copy1107 ポケモン go 広島 広島県">
@@ -1224,7 +1224,7 @@ header p{font-size:11px;color:var(--muted)}
 </div>
 </div></div>
 </div>
-<div class="region-section"><div class="region-title">🌺 九州・沖縄 <span class="badge">23名</span></div>
+<div class="region-section"><div class="region-title">🌺 九州・沖縄 <span class="badge">23名</span><span class="badge" style="background:#0f3460;color:#60a5fa;margin-left:4px;">20グループ</span></div>
 <div class="pref-section" id="40_福岡県"><div class="pref-title">福岡県 <span class="pref-count">(6名)</span></div>
 <div class="members-grid">
 <div class="member-card" data-search="chamimaru1 pokémon go kurosaki 福岡県">
@@ -1536,7 +1536,13 @@ function loadSheetRowsViaJsonp(sheetUrl){
           throw new Error('シート形式が不正です');
         }
         const header=table.cols.map(c=>normalizeHeader(c&&c.label?c.label:c&&c.id?c.id:''));
-        const rows=table.rows.map(r=>(r.c||[]).map(cell=>cell&&cell.v!=null?String(cell.v):(cell&&cell.f?String(cell.f):'')));
+        const rows=table.rows.map(r=>(r.c||[]).map(cell=>{
+          if(!cell) return '';
+          // cell.f はスプレッドシートの表示値、cell.v は内部値（日付は "Date(YYYY,M,D)"）
+          // どちらも normalizeDate で統一処理する
+          const raw = cell.f!=null ? String(cell.f) : (cell.v!=null ? String(cell.v) : '');
+          return normalizeDate(raw) || raw;
+        }));
         cleanup();
         resolve({header,rows});
       }catch(err){
@@ -1559,6 +1565,23 @@ function escHtml(s){
     .replace(/>/g,'&gt;')
     .replace(/"/g,'&quot;')
     .replace(/'/g,'&#39;');
+}
+
+// 日付文字列を YYYY/M/D に正規化する
+// 対応フォーマット: "M/D/YYYY", "YYYY/M/D", "YYYY-M-D", "Date(YYYY,M,D)"
+function normalizeDate(s){
+  s = String(s||'').trim();
+  if(!s) return '';
+  // Date(YYYY,M,D)
+  const dm = s.match(/^Date\((\d+),(\d+),(\d+)\)$/);
+  if(dm) return `${dm[1]}/${parseInt(dm[2])+1}/${dm[3]}`;
+  // YYYY/M/D or YYYY-M-D
+  const ymd = s.match(/^(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})$/);
+  if(ymd) return `${ymd[1]}/${parseInt(ymd[2])}/${parseInt(ymd[3])}`;
+  // M/D/YYYY
+  const mdy = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if(mdy) return `${mdy[3]}/${parseInt(mdy[1])}/${parseInt(mdy[2])}`;
+  return s;
 }
 
 function parseCsv(text){
@@ -1643,7 +1666,7 @@ function parseSheetCsv(csvText){
       city,
       prefCode: pm ? pm[1] : null,
       prefName: pm ? pm[2] : city,
-      joinDate: String(r[idx.date]||'').trim(),
+      joinDate: normalizeDate(String(r[idx.date]||'').trim()),
       lat: coords.lat,
       lng: coords.lng
     };
@@ -1682,7 +1705,7 @@ function parseSheetRows(header, rows){
       city,
       prefCode: pm ? pm[1] : null,
       prefName: pm ? pm[2] : city,
-      joinDate: String(r[idx.date]||'').trim(),
+      joinDate: normalizeDate(String(r[idx.date]||'').trim()),
       lat: coords.lat,
       lng: coords.lng
     };
@@ -1750,8 +1773,9 @@ function renderFromMembers(members){
   const total=activeMembers.length;
   const covered=47-missingCodes.length;
   const secondCount=activeMembers.filter(m=>m.second).length;
+  const uniqueGroups=new Set(activeMembers.map(m=>m.group).filter(g=>g)).size;
   const stats=document.getElementById('statsLine');
-  if(stats) stats.innerHTML=`合計 <span>${total}</span>名 / カバー <span>${covered}/47</span>都道府県 / 2nd CA <span>${secondCount}</span>名 / 休止 <span>${pausedMembers.length}</span>名`;
+  if(stats) stats.innerHTML=`合計 <span>${total}</span>名 / カバー <span>${covered}/47</span>都道府県 / 2nd CA <span>${secondCount}</span>名 / 休止 <span>${pausedMembers.length}</span>名 / グループ <span>${uniqueGroups}</span>`;
 
   let sidebarHtml='';
   let mainHtml='<div class="missing-section" id="missing">';
@@ -1772,8 +1796,11 @@ function renderFromMembers(members){
 
   REGION_CONFIG.forEach(region=>{
     const regionTotal=region.prefs.reduce((n,code)=>n+(prefData[code]?.count||0),0);
-    sidebarHtml+=`<div class="sidebar-region">${escHtml(region.title)} (${regionTotal})</div>`;
-    mainHtml+=`<div class="region-section"><div class="region-title">${escHtml(region.title)} <span class="badge">${regionTotal}名</span></div>`;
+    const regionGroups=new Set(
+      region.prefs.flatMap(code=>(byPref[code]?.members||[]).map(m=>m.group).filter(g=>g))
+    ).size;
+    sidebarHtml+=`<div class="sidebar-region">${escHtml(region.title)} (${regionTotal}) / ${regionGroups}グループ</div>`;
+    mainHtml+=`<div class="region-section"><div class="region-title">${escHtml(region.title)} <span class="badge">${regionTotal}名</span><span class="badge" style="background:#0f3460;color:#60a5fa;margin-left:4px;">${regionGroups}グループ</span></div>`;
     region.prefs.forEach(code=>{
       const info=prefData[code];
       const id=`${code}_${info.name}`;
@@ -1836,6 +1863,16 @@ window.addEventListener('DOMContentLoaded',()=>{
     const d=new Date(at);
     const ts=Number.isNaN(d.getTime())?at:d.toLocaleString('ja-JP');
     setSyncStatus(`最終更新: ${ts}`,'ok');
+  }
+  // 静的HTMLのカードデータからグループ総数を即時表示（シートロード前のフォールバック）
+  const staticGroups=new Set(
+    [...document.querySelectorAll('.mc-group')].map(el=>el.textContent.replace('🏕️','').trim()).filter(g=>g)
+  );
+  const statsEl=document.getElementById('statsLine');
+  if(statsEl && statsEl.textContent.includes('—')){
+    const memberCards=document.querySelectorAll('.member-card');
+    const badge2nd=document.querySelectorAll('.badge-2nd');
+    statsEl.innerHTML=`合計 <span>${memberCards.length}</span>名 / グループ <span>${staticGroups.size}</span>`;
   }
   initHeaderAutoHide();
   refreshFromSheet();
