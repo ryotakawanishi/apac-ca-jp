@@ -1724,8 +1724,10 @@ function buildCardHtml(m){
   const avatarSrc = m.avatarUrl;
   const avatar=avatarSrc?`<img src="${escHtml(avatarSrc)}" alt="${escHtml(m.name)}" loading="lazy" referrerpolicy="no-referrer">`:initials;
   const link = m.url ? `<a href="${escHtml(m.url)}" target="_blank" class="cf-link">Campfire</a>` : '<span class="cf-link" style="opacity:.65">URLなし</span>';
-  const mapLink=(m.lat!=null&&m.lng!=null)?`<a href="#japanMap" class="cf-link">地図へ</a>`:'';
-  return `<div class="member-card" id="${escHtml(m.cardId||'')}" data-search="${escHtml(dataSearch)}" data-search-norm="${escHtml(dataSearchNorm)}"${style}><div class="mc-top"><span class="${badge}">${label}</span><span class="mc-date">${escHtml(m.joinDate)}</span></div><div class="mc-identity"><div class="mc-avatar">${avatar}</div><div class="mc-name">${escHtml(m.name)}</div></div><div class="mc-group">🏕️ ${escHtml(m.group)}</div><div class="mc-bottom">${link}${mapLink}</div></div>`;
+  const mapLink=(m.lat!=null&&m.lng!=null)
+    ?`<a href="#japanMap" class="cf-link" onclick="event.preventDefault();flyToMember(${m.lat},${m.lng})">地図へ</a>`
+    :'';
+  return `<div class="member-card" id="${escHtml(m.cardId||'')}" data-member-name="${escHtml(m.name.toLowerCase())}" data-search="${escHtml(dataSearch)}" data-search-norm="${escHtml(dataSearchNorm)}"${style}><div class="mc-top"><span class="${badge}">${label}</span><span class="mc-date">${escHtml(m.joinDate)}</span></div><div class="mc-identity"><div class="mc-avatar">${avatar}</div><div class="mc-name">${escHtml(m.name)}</div></div><div class="mc-group">🏕️ ${escHtml(m.group)}</div><div class="mc-bottom">${link}${mapLink}</div></div>`;
 }
 
 function renderFromMembers(members){
@@ -1844,6 +1846,18 @@ async function refreshFromSheet(){
     localStorage.setItem('caSheetLastUpdatedAt',now.toISOString());
     const withAvatar = members.filter(m=>String(m.avatarUrl||'').trim()!=='').length;
     setSyncStatus(`最終更新: ${now.toLocaleString('ja-JP')} / Discord Icon ${withAvatar}件`,'ok');
+    // 静的カードのCampfire URLも最新シートデータで上書き
+    const urlMap={};
+    members.forEach(m=>{ if(m.name&&m.url) urlMap[m.name.toLowerCase()]=m.url; });
+    document.querySelectorAll('.member-card[data-member-name]').forEach(card=>{
+      const key=card.dataset.memberName;
+      const url=urlMap[key];
+      if(!url) return;
+      const bottom=card.querySelector('.mc-bottom');
+      if(!bottom) return;
+      const existing=bottom.querySelector('a.cf-link[href*="campfire"]');
+      if(existing){ existing.href=url; }
+    });
   }catch(err){
     const msg=String(err&&err.message?err.message:err);
     if(msg.includes('Failed to fetch')){
@@ -1894,8 +1908,8 @@ function initMap(){
   if(!mapEl||!window.L) return;
   if(map){ map.remove(); map=null; }
   const mobile = window.matchMedia('(max-width: 768px)').matches;
-  map = L.map('japanMap',{center:[36.5,137.5],zoom:mobile?4:5,zoomControl:true,attributionControl:false});
-  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{subdomains:'abcd',maxZoom:10}).addTo(map);
+  map = L.map('japanMap',{center:[36.5,137.5],zoom:mobile?4:5,zoomControl:true,attributionControl:false,maxZoom:16});
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{subdomains:'abcd',maxZoom:16}).addTo(map);
   fetch('https://raw.githubusercontent.com/dataofjapan/land/master/japan.geojson')
     .then(r=>r.json())
     .then(geo=>{
@@ -1920,25 +1934,34 @@ function initMap(){
           layer.on('mouseout',function(){this.setStyle({weight:1.5,fillOpacity:(info&&info.has_ca)?0.5:0.35})});
         }
       }).addTo(map);
+      // GeoJSON（都道府県ポリゴン）追加後にピンを重ねる
       addMemberPins();
       window.setTimeout(()=>map.invalidateSize(), 80);
     });
 }
 
+// lat/lng → marker の検索用配列
+let memberMarkerList = [];
+
 function addMemberPins(){
   if(!map) return;
+  // 既存ピンをクリア
+  memberMarkerList.forEach(m=>m.marker.remove());
+  memberMarkerList = [];
+
   latestMembers
     .filter(m=>m.lat!=null&&m.lng!=null)
     .forEach(m=>{
-      const popupLink=m.url?`<a href="${escHtml(m.url)}" target="_blank" style="color:#2563eb;text-decoration:none">Campfireを開く</a>`:'リンクなし';
-      const popupHtml=`<div style="min-width:170px"><b>${escHtml(m.name)}</b><br><span style="color:#64748b">${escHtml(m.prefName)}</span><br><span style="color:#475569">${escHtml(m.group)}</span><br>${popupLink}</div>`;
+      const popupLink=m.url?`<a href="${escHtml(m.url)}" target="_blank" style="color:#60a5fa;font-weight:600">Campfireを開く</a>`:'リンクなし';
+      const popupHtml=`<div style="min-width:180px;font-size:13px;line-height:1.6"><b style="font-size:14px">${escHtml(m.name)}</b><br><span style="color:#94a3b8">${escHtml(m.prefName)}</span><br><span style="color:#cbd5e1">${escHtml(m.group)}</span><br style="margin-bottom:4px">${popupLink}</div>`;
       const marker=L.circleMarker([m.lat,m.lng],{
-        radius:m.second?7:5,
+        radius:m.second?8:6,
         color:m.second?'#fbbf24':'#93b4ff',
         fillColor:m.second?'#f59e0b':'#4f8cff',
         fillOpacity:0.95,
-        weight:1.5
+        weight:2
       }).addTo(map).bindPopup(popupHtml);
+      memberMarkerList.push({lat:m.lat, lng:m.lng, cardId:m.cardId||'', marker});
       marker.on('click',()=>{
         if(m.cardId){
           const card=document.getElementById(m.cardId);
@@ -1950,6 +1973,44 @@ function addMemberPins(){
         }
       });
     });
+}
+
+function flyToMember(lat, lng){
+  // 1. 地図セクションへスクロール
+  const mapEl=document.getElementById('japanMap');
+  if(mapEl) mapEl.scrollIntoView({behavior:'smooth', block:'start'});
+
+  // 2. 座標で最近傍マーカーを探す関数
+  const findNearestMarker=()=>{
+    let nearest=null, minDist=Infinity;
+    memberMarkerList.forEach(entry=>{
+      const d=Math.hypot(entry.lat-lat, entry.lng-lng);
+      if(d<minDist){ minDist=d; nearest=entry.marker; }
+    });
+    return nearest;
+  };
+
+  // 3. flyTo してポップアップを開く
+  const doFly=()=>{
+    map.invalidateSize();
+    map.setView([lat, lng], 13, {animate:true, duration:0.8});
+    setTimeout(()=>{
+      const mk=findNearestMarker();
+      if(mk) mk.openPopup();
+    }, 900);
+  };
+
+  // 4. マーカーがまだ追加されていなければ待機してから実行
+  if(!map || memberMarkerList.length===0){
+    let tries=0;
+    const wait=setInterval(()=>{
+      tries++;
+      if(memberMarkerList.length>0 && map){ clearInterval(wait); doFly(); }
+      else if(tries>50){ clearInterval(wait); if(map) doFly(); }
+    }, 100);
+  } else {
+    setTimeout(doFly, 300);
+  }
 }
 
 initMap();
