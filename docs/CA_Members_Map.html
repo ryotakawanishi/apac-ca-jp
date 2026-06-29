@@ -85,6 +85,16 @@ header p{font-size:11px;color:var(--muted)}
 .mc-name{font-size:13px;font-weight:700;color:#fff;line-height:1.2}
 .mc-group{font-size:11px;color:var(--muted);margin-bottom:6px}
 .mc-bottom{display:flex;gap:8px}
+.mc-bio{margin:4px 0 8px}
+.mc-bio summary{font-size:10px;color:var(--accent);cursor:pointer;user-select:none;padding:2px 0;list-style:none;display:flex;align-items:center;gap:4px}
+.mc-bio summary::before{content:'▶';font-size:8px;transition:transform .2s}
+.mc-bio[open] summary::before{transform:rotate(90deg)}
+.mc-bio summary:hover{color:#93b4ff}
+.bio-body{margin-top:8px;border-top:1px solid var(--line);padding-top:8px;display:flex;flex-direction:column;gap:5px}
+.bio-row{display:flex;gap:6px;font-size:11px;line-height:1.5}
+.bio-label{color:var(--accent);white-space:nowrap;min-width:80px;font-weight:600;flex-shrink:0}
+.bio-val{color:var(--text);flex:1;word-break:break-word}
+.bio-plain{color:var(--muted);font-size:11px}
 .cf-link{font-size:10px;color:var(--accent);text-decoration:none;padding:2px 8px;border:1px solid rgba(108,140,255,.3);border-radius:4px}
 .cf-link:hover{background:rgba(108,140,255,.1)}
 .leaflet-popup-content{font-size:12px;color:#333}
@@ -1644,6 +1654,7 @@ function parseSheetCsv(csvText){
     url: header.indexOf('campfire url'),
     city: header.indexOf('primary city'),
     date: header.indexOf('ca join date'),
+    bio: findHeaderIndex(header, ['自己紹介','bio','introduction','自己紹介文']),
     c1: findHeaderIndex(header, ['lng 緯度','lat 緯度','緯度','latitude','lat']),
     c2: findHeaderIndex(header, ['lat 経度','lng 経度','経度','longitude','lng']),
     avatar: findHeaderIndex(header, ['discord icon','icon url','avatar url']),
@@ -1663,6 +1674,7 @@ function parseSheetCsv(csvText){
       url: String(r[idx.url]||'').trim(),
       avatarUrl: idx.avatar>=0 ? String(r[idx.avatar]||'').trim() : '',
       status: idx.status>=0 ? String(r[idx.status]||'').trim() : '',
+      bio: idx.bio>=0 ? String(r[idx.bio]||'').trim() : '',
       city,
       prefCode: pm ? pm[1] : null,
       prefName: pm ? pm[2] : city,
@@ -1683,6 +1695,7 @@ function parseSheetRows(header, rows){
     url: header.indexOf('campfire url'),
     city: header.indexOf('primary city'),
     date: header.indexOf('ca join date'),
+    bio: findHeaderIndex(header, ['自己紹介','bio','introduction','自己紹介文']),
     c1: findHeaderIndex(header, ['lng 緯度','lat 緯度','緯度','latitude','lat']),
     c2: findHeaderIndex(header, ['lat 経度','lng 経度','経度','longitude','lng']),
     avatar: findHeaderIndex(header, ['discord icon','icon url','avatar url']),
@@ -1702,6 +1715,7 @@ function parseSheetRows(header, rows){
       url: String(r[idx.url]||'').trim(),
       avatarUrl: idx.avatar>=0 ? String(r[idx.avatar]||'').trim() : '',
       status: idx.status>=0 ? String(r[idx.status]||'').trim() : '',
+      bio: idx.bio>=0 ? String(r[idx.bio]||'').trim() : '',
       city,
       prefCode: pm ? pm[1] : null,
       prefName: pm ? pm[2] : city,
@@ -1727,7 +1741,34 @@ function buildCardHtml(m){
   const mapLink=(m.lat!=null&&m.lng!=null)
     ?`<a href="#japanMap" class="cf-link" onclick="event.preventDefault();flyToMember(${m.lat},${m.lng})">地図へ</a>`
     :'';
-  return `<div class="member-card" id="${escHtml(m.cardId||'')}" data-member-name="${escHtml(m.name.toLowerCase())}" data-search="${escHtml(dataSearch)}" data-search-norm="${escHtml(dataSearchNorm)}"${style}><div class="mc-top"><span class="${badge}">${label}</span><span class="mc-date">${escHtml(m.joinDate)}</span></div><div class="mc-identity"><div class="mc-avatar">${avatar}</div><div class="mc-name">${escHtml(m.name)}</div></div><div class="mc-group">🏕️ ${escHtml(m.group)}</div><div class="mc-bottom">${link}${mapLink}</div></div>`;
+
+  // 自己紹介をパースして表示
+  let bioHtml = '';
+  if(m.bio){
+    const lines = m.bio.split(/\n/).map(l=>l.trim()).filter(l=>l);
+    const bioItems = lines.map(line=>{
+      // 【ラベル】値 の形式をパース
+      const lm = line.match(/^(.*?)【(.+?)】\s*(.*)$/);
+      if(lm){
+        const emoji = lm[1].trim();
+        const label = lm[2].trim();
+        const val   = lm[3].trim();
+        if(!val) return '';
+        // URLをリンク化
+        const valHtml = escHtml(val).replace(
+          /(https?:\/\/[^\s<>"]+)/g,
+          '<a href="$1" target="_blank" style="color:#60a5fa;word-break:break-all">$1</a>'
+        );
+        return `<div class="bio-row"><span class="bio-label">${escHtml(emoji)} ${escHtml(label)}</span><span class="bio-val">${valHtml}</span></div>`;
+      }
+      return `<div class="bio-row bio-plain">${escHtml(line)}</div>`;
+    }).filter(l=>l);
+    if(bioItems.length){
+      bioHtml = `<details class="mc-bio"><summary>自己紹介を見る</summary><div class="bio-body">${bioItems.join('')}</div></details>`;
+    }
+  }
+
+  return `<div class="member-card" id="${escHtml(m.cardId||'')}" data-member-name="${escHtml(m.name.toLowerCase())}" data-search="${escHtml(dataSearch)}" data-search-norm="${escHtml(dataSearchNorm)}"${style}><div class="mc-top"><span class="${badge}">${label}</span><span class="mc-date">${escHtml(m.joinDate)}</span></div><div class="mc-identity"><div class="mc-avatar">${avatar}</div><div class="mc-name">${escHtml(m.name)}</div></div><div class="mc-group">🏕️ ${escHtml(m.group)}</div>${bioHtml}<div class="mc-bottom">${link}${mapLink}</div></div>`;
 }
 
 function renderFromMembers(members){
